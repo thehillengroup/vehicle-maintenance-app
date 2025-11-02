@@ -2,6 +2,13 @@
 
 FleetCare is a shared React + React Native workspace for managing vehicle maintenance records, registration renewals, and emissions reminders. The Turborepo houses a Next.js web portal, an Expo-powered mobile app, and shared domain packages backed by Prisma + PostgreSQL (SQLite for local development).
 
+> **Publishing reminder:** everything lives locally. When you're ready to push to GitHub, run:
+``ash
+ git remote add origin git@github.com:thehillengroup/<repo-name>.git
+ git push -u origin master
+`` 
+> Replace <repo-name> with the repository you create on GitHub.
+
 ## Apps & Packages
 
 - `apps/web` – Next.js App Router site with Tailwind UI, server components, and API routes for vehicles and reminders
@@ -95,3 +102,5 @@ npx prisma studio --schema packages/db/prisma/schema.prisma
 3. Wire up background jobs (e.g., Vercel Cron or Supabase Edge Functions) to queue push/email/SMS reminders.
 4. Add VIN decoding + document upload pipelines (S3/Supabase storage) to enrich vehicle records.
 5. Harden the mobile app with offline persistence (SQLite/AsyncStorage) and push notification support via Expo services.
+
+> **Reminder:** install Android Studio and the Android SDK before running expo run:android or launching the Android emulator.
