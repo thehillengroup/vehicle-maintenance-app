@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum ReminderType {
+  REGISTRATION
+  EMISSIONS
+  SERVICE
+}
+
+enum ReminderChannel {
+  PUSH
+  EMAIL
+  SMS
+}
+
+enum FuelType {
+  GAS
+  DIESEL
+  HYBRID
+  EV
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  name          String?
+  timeZone      String?        @default("UTC")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  vehicles      Vehicle[]
+  reminders     Reminder[]
+  notifications Notification[]
+}
+
+model Vehicle {
+  id                    String             @id @default(cuid())
+  userId                String
+  vin                   String             @unique
+  make                  String
+  model                 String
+  year                  Int
+  trim                  String?
+  nickname              String?
+  licensePlate          String?
+  registrationState     String
+  fuelType              FuelType?          @default(GAS)
+  registrationRenewedOn DateTime           @default(now())
+  emissionsTestedOn     DateTime?
+  registrationDueOn     DateTime
+  emissionsDueOn        DateTime?
+  mileage               Int?
+  color                 String?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  owner                 User               @relation(fields: [userId], references: [id])
+  maintenanceEvents     MaintenanceEvent[]
+  reminders             Reminder[]
+  documents             StoredDocument[]   @relation("VehicleDocuments")
+}
+
+model MaintenanceEvent {
+  id          String           @id @default(cuid())
+  vehicleId   String
+  serviceDate DateTime
+  headline    String
+  odometer    Int?
+  costCents   Int?
+  location    String?
+  notes       String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  attachments StoredDocument[] @relation("MaintenanceEventDocuments")
+  vehicle     Vehicle          @relation(fields: [vehicleId], references: [id])
+}
+
+model Reminder {
+  id             String         @id @default(cuid())
+  userId         String
+  vehicleId      String
+  type           ReminderType
+  dueOn          DateTime
+  leadTimeDays   Int            @default(30)
+  satisfiedAt    DateTime?
+  nextNotifiedAt DateTime?
+  channelsRaw    String         @default("[]")
+  notes          String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  user           User           @relation(fields: [userId], references: [id])
+  vehicle        Vehicle        @relation(fields: [vehicleId], references: [id])
+  notifications  Notification[]
+}
+
+model Notification {
+  id         String          @id @default(cuid())
+  reminderId String
+  userId     String
+  channel    ReminderChannel
+  sentAt     DateTime        @default(now())
+  status     String
+  payload    String?
+  reminder   Reminder        @relation(fields: [reminderId], references: [id])
+  user       User            @relation(fields: [userId], references: [id])
+}
+
+model StoredDocument {
+  id                 String            @id @default(cuid())
+  vehicleId          String?
+  maintenanceEventId String?
+  label              String?
+  url                String
+  contentType        String?
+  uploadedAt         DateTime          @default(now())
+  vehicle            Vehicle?          @relation("VehicleDocuments", fields: [vehicleId], references: [id])
+  maintenanceEvent   MaintenanceEvent? @relation("MaintenanceEventDocuments", fields: [maintenanceEventId], references: [id])
+}
