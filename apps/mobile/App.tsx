@@ -1,5 +1,5 @@
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -15,8 +15,49 @@ import {
   type Vehicle,
 } from "@repo/core";
 import { differenceInCalendarDays, format } from "date-fns";
+import {
+  useFonts as useDmSansFonts,
+  DMSans_500Medium,
+  DMSans_700Bold,
+} from "@expo-google-fonts/dm-sans";
+import {
+  useFonts as useInterFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+} from "@expo-google-fonts/inter";
+import {
+  useFonts as useJetBrainsFonts,
+  JetBrainsMono_500Medium,
+} from "@expo-google-fonts/jetbrains-mono";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3000";
+
+const palette = {
+  surface: "#f8fafc",
+  surfaceRaised: "#ffffff",
+  surfaceSubtle: "#f1f5f9",
+  border: "#e2e8f0",
+  brand500: "#6366f1",
+  brand600: "#4f46e5",
+  accent500: "#f97316",
+  accent100: "#ffe0d1",
+  ink: "#0f172a",
+  inkMuted: "#475569",
+  inkSubtle: "#64748b",
+  success: "#059669",
+  warning: "#ca8a04",
+  danger: "#dc2626",
+};
+
+const fonts = {
+  heading: "DMSans_700Bold",
+  headingMedium: "DMSans_500Medium",
+  body: "Inter_400Regular",
+  bodyMedium: "Inter_500Medium",
+  bodySemibold: "Inter_600SemiBold",
+  mono: "JetBrainsMono_500Medium",
+};
 
 interface VehicleSummary {
   vehicle: Vehicle;
@@ -85,11 +126,24 @@ const FALLBACK_REMINDERS: Reminder[] = [
 ];
 
 export default function App() {
-  const [vehicleSummaries, setVehicleSummaries] = useState<VehicleSummary[]>(
-    [],
-  );
+  const [vehicleSummaries, setVehicleSummaries] = useState<VehicleSummary[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [dmSansLoaded] = useDmSansFonts({
+    DMSans_500Medium,
+    DMSans_700Bold,
+  });
+  const [interLoaded] = useInterFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+  });
+  const [jetBrainsLoaded] = useJetBrainsFonts({
+    JetBrainsMono_500Medium,
+  });
+
+  const fontsLoaded = dmSansLoaded && interLoaded && jetBrainsLoaded;
 
   useEffect(() => {
     let cancelled = false;
@@ -128,24 +182,23 @@ export default function App() {
             reminderSchema.parse(item),
           ) ?? FALLBACK_REMINDERS;
 
-        if (cancelled) return;
-
-        setVehicleSummaries(
-          parsedVehicles.map((vehicle) => ({
-            vehicle,
-            registrationDueIn: differenceInCalendarDays(
-              vehicle.registrationDueOn,
-              new Date(),
-            ),
-            emissionsDueIn: vehicle.emissionsDueOn
-              ? differenceInCalendarDays(vehicle.emissionsDueOn, new Date())
-              : null,
-          })),
-        );
-        setReminders(parsedReminders);
+        if (!cancelled) {
+          setVehicleSummaries(
+            parsedVehicles.map((vehicle) => ({
+              vehicle,
+              registrationDueIn: differenceInCalendarDays(
+                vehicle.registrationDueOn,
+                new Date(),
+              ),
+              emissionsDueIn: vehicle.emissionsDueOn
+                ? differenceInCalendarDays(vehicle.emissionsDueOn, new Date())
+                : null,
+            })),
+          );
+          setReminders(parsedReminders);
+        }
       } catch (error) {
-        if (cancelled) return;
-        console.warn("Falling back to demo data", error);
+        console.warn("Falling back to offline data", error);
         const parsedVehicles = FALLBACK_VEHICLES.map((item) =>
           vehicleSchema.parse({
             ...item,
@@ -160,19 +213,21 @@ export default function App() {
             licensePlate: item.licensePlate ?? null,
           }),
         );
-        setVehicleSummaries(
-          parsedVehicles.map((vehicle) => ({
-            vehicle,
-            registrationDueIn: differenceInCalendarDays(
-              vehicle.registrationDueOn,
-              new Date(),
-            ),
-            emissionsDueIn: vehicle.emissionsDueOn
-              ? differenceInCalendarDays(vehicle.emissionsDueOn, new Date())
-              : null,
-          })),
-        );
-        setReminders(FALLBACK_REMINDERS);
+        if (!cancelled) {
+          setVehicleSummaries(
+            parsedVehicles.map((vehicle) => ({
+              vehicle,
+              registrationDueIn: differenceInCalendarDays(
+                vehicle.registrationDueOn,
+                new Date(),
+              ),
+              emissionsDueIn: vehicle.emissionsDueOn
+                ? differenceInCalendarDays(vehicle.emissionsDueOn, new Date())
+                : null,
+            })),
+          );
+          setReminders(FALLBACK_REMINDERS);
+        }
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -181,7 +236,6 @@ export default function App() {
     };
 
     hydrate();
-
     return () => {
       cancelled = true;
     };
@@ -233,14 +287,16 @@ export default function App() {
     ];
   }, [vehicleSummaries]);
 
-  const remindersByVehicle = useMemo(() => {
-    return reminders.reduce<Record<string, Reminder[]>>((acc, reminder) => {
-      const list = acc[reminder.vehicleId] ?? [];
-      list.push(reminder);
-      acc[reminder.vehicleId] = list;
-      return acc;
-    }, {});
-  }, [reminders]);
+  if (!fontsLoaded) {
+    return (
+      <SafeAreaProvider>
+        <SafeAreaView style={[styles.safeArea, styles.centered]}>
+          <StatusBar style="dark" />
+          <ActivityIndicator color={palette.brand600} />
+        </SafeAreaView>
+      </SafeAreaProvider>
+    );
+  }
 
   return (
     <SafeAreaProvider>
@@ -250,162 +306,139 @@ export default function App() {
           style={styles.scrollContainer}
           contentContainerStyle={styles.scrollContent}
         >
-        <View style={styles.header}>
-          <Text style={styles.brand}>FleetCare</Text>
-          <Text style={styles.title}>Garage Overview</Text>
-          <Text style={styles.subtitle}>
-            Monitor renewals, inspections, and service reminders while you are
-            on the go.
-          </Text>
-        </View>
+          <View style={styles.header}>
+            <Text style={styles.brand}>FleetCare</Text>
+            <Text style={styles.title}>Garage overview</Text>
+            <Text style={styles.subtitle}>
+              Monitor renewals, inspections, and service reminders while you are
+              on the go.
+            </Text>
+          </View>
 
-        <View style={styles.statsRow}>
-          {stats.map((stat) => (
-            <View key={stat.label} style={styles.statCard}>
-              <Text style={styles.statLabel}>{stat.label}</Text>
-              <Text style={styles.statValue}>{stat.value}</Text>
-              <Text style={styles.statHelper}>{stat.helper}</Text>
-            </View>
-          ))}
-        </View>
+          <View style={styles.statRow}>
+            {stats.map((stat) => (
+              <View key={stat.label} style={styles.statCard}>
+                <Text style={styles.statLabel}>{stat.label}</Text>
+                <Text style={styles.statValue}>{stat.value}</Text>
+                <Text style={styles.statHelper}>{stat.helper}</Text>
+              </View>
+            ))}
+          </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Vehicles</Text>
-          {loading ? (
-            <View style={styles.loadingCard}>
-              <ActivityIndicator size="small" color="#265cff" />
-              <Text style={styles.loadingText}>Syncing your garage...</Text>
-            </View>
-          ) : vehicleSummaries.length ? (
-            vehicleSummaries.map((summary) => (
-              <View key={summary.vehicle.id} style={styles.vehicleCard}>
-                <View style={styles.vehicleHeader}>
-                  <View>
-                    <Text style={styles.vehicleName}>
-                      {summary.vehicle.year} {summary.vehicle.make}{" "}
-                      {summary.vehicle.model}
-                    </Text>
-                    <Text style={styles.vehicleVin}>
-                      VIN {summary.vehicle.vin}
-                    </Text>
-                  </View>
-                  {summary.vehicle.nickname ? (
-                    <View style={styles.badgeInfo}>
-                      <Text style={styles.badgeText}>
-                        {summary.vehicle.nickname}
-                      </Text>
-                    </View>
-                  ) : null}
-                </View>
-                <View style={styles.vehicleMeta}>
-                  <View style={styles.metaColumn}>
-                    <Text style={styles.metaLabel}>Registration</Text>
-                    <Text style={styles.metaValue}>
-                      Due {format(summary.vehicle.registrationDueOn, "MMM d, yyyy")}
-                    </Text>
-                    <Text style={styles.metaHelper}>
-                      {describeWindow(summary.registrationDueIn)}
-                    </Text>
-                  </View>
-                  <View style={styles.metaColumn}>
-                    <Text style={styles.metaLabel}>Emissions</Text>
-                    {summary.vehicle.emissionsDueOn ? (
-                      <>
-                        <Text style={styles.metaValue}>
-                          Due {format(summary.vehicle.emissionsDueOn, "MMM d, yyyy")}
-                        </Text>
-                        <Text style={styles.metaHelper}>
-                          {describeWindow(summary.emissionsDueIn ?? 0)}
-                        </Text>
-                      </>
-                    ) : (
-                      <Text style={styles.metaHelper}>Not required</Text>
-                    )}
-                  </View>
-                </View>
-                <View style={styles.vehicleBadges}>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Vehicles</Text>
+            {loading ? (
+              <View style={styles.loadingCard}>
+                <ActivityIndicator size="small" color={palette.brand600} />
+                <Text style={styles.loadingText}>
+                  Syncing your garage...
+                </Text>
+              </View>
+            ) : vehicleSummaries.length ? (
+              vehicleSummaries.map(
+                ({ vehicle, registrationDueIn, emissionsDueIn }) => (
                   <View
-                    style={[
-                      styles.badge,
-                      summary.registrationDueIn < 0
-                        ? styles.badgeDanger
-                        : styles.badgeInfo,
-                    ]}
+                    key={vehicle.id}
+                    style={styles.vehicleCard}
                   >
-                    <Text style={styles.badgeText}>
-                      {summary.vehicle.registrationState} Plate{" "}
-                      {summary.vehicle.licensePlate ?? "-"}
-                    </Text>
-                  </View>
-                  <View style={[styles.badge, styles.badgeInfo]}>
-                    <Text style={styles.badgeText}>
-                      {summary.vehicle.fuelType ?? "GAS"}
-                    </Text>
-                  </View>
-                  {summary.vehicle.mileage ? (
-                    <View style={[styles.badge, styles.badgeSuccess]}>
-                      <Text style={styles.badgeText}>
-                        {summary.vehicle.mileage.toLocaleString()} mi
-                      </Text>
-                    </View>
-                  ) : null}
-                </View>
-                {remindersByVehicle[summary.vehicle.id]?.length ? (
-                  <View style={styles.reminderList}>
-                    {remindersByVehicle[summary.vehicle.id].map((reminder) => (
-                      <View key={reminder.id} style={styles.reminderRow}>
-                        <Text style={styles.reminderType}>
-                          {reminder.type === "SERVICE"
-                            ? "Service"
-                            : reminder.type.toLowerCase()}
+                    <View style={styles.vehicleHeader}>
+                      <View>
+                        <Text style={styles.vehicleName}>
+                          {vehicle.year} {vehicle.make} {vehicle.model}
                         </Text>
-                        <Text style={styles.reminderDetails}>
-                          {format(reminder.dueDate, "MMM d, yyyy")} via{" "}
-                          {reminder.channels.join(", ")}
+                        <Text style={styles.vehicleVin}>
+                          VIN {vehicle.vin}
                         </Text>
                       </View>
-                    ))}
+                      {vehicle.nickname ? (
+                        <View style={[styles.badge, styles.badgeAccent]}>
+                          <Text style={styles.badgeText}>
+                            {vehicle.nickname}
+                          </Text>
+                        </View>
+                      ) : null}
+                    </View>
+                    <View style={styles.vehicleMeta}>
+                      <View style={styles.metaColumn}>
+                        <Text style={styles.metaLabel}>Registration</Text>
+                        <Text style={styles.metaValue}>
+                          Due {format(vehicle.registrationDueOn, "MMM d, yyyy")}
+                        </Text>
+                        <Text style={styles.metaHelper}>
+                          {describeWindow(registrationDueIn)}
+                        </Text>
+                      </View>
+                      <View style={styles.metaColumn}>
+                        <Text style={styles.metaLabel}>Emissions</Text>
+                        {vehicle.emissionsDueOn ? (
+                          <>
+                            <Text style={styles.metaValue}>
+                              Due{" "}
+                              {format(vehicle.emissionsDueOn, "MMM d, yyyy")}
+                            </Text>
+                            <Text style={styles.metaHelper}>
+                              {describeWindow(emissionsDueIn ?? 0)}
+                            </Text>
+                          </>
+                        ) : (
+                          <Text style={styles.metaHelper}>Not required</Text>
+                        )}
+                      </View>
+                    </View>
+                    <View style={styles.badgeRow}>
+                      <Badge tone={registrationDueIn < 0 ? "danger" : "info"}>
+                        {vehicle.registrationState} • Plate{" "}
+                        {vehicle.licensePlate ?? "—"}
+                      </Badge>
+                      <Badge tone="info">{vehicle.fuelType}</Badge>
+                      {vehicle.mileage ? (
+                        <Badge tone="success">
+                          {vehicle.mileage.toLocaleString()} mi
+                        </Badge>
+                      ) : null}
+                    </View>
                   </View>
-                ) : null}
+                ),
+              )
+            ) : (
+              <View style={styles.emptyCard}>
+                <Text style={styles.emptyTitle}>No vehicles yet</Text>
+                <Text style={styles.emptyBody}>
+                  Add your first vehicle from the web dashboard to begin
+                  tracking reminders in the app.
+                </Text>
               </View>
-            ))
-          ) : (
-            <View style={styles.emptyCard}>
-              <Text style={styles.emptyTitle}>No vehicles yet</Text>
-              <Text style={styles.emptyBody}>
-                Add a vehicle from the web dashboard to start tracking
-                reminders here.
-              </Text>
-            </View>
-          )}
-        </View>
+            )}
+          </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Upcoming reminders</Text>
-          {reminders.length ? (
-            reminders.map((reminder) => (
-              <View key={reminder.id} style={styles.reminderCard}>
-                <Text style={styles.reminderTitle}>
-                  {reminder.type === "SERVICE"
-                    ? "Service"
-                    : reminder.type.toLowerCase()}{" "}
-                  due
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Upcoming reminders</Text>
+            {reminders.length ? (
+              reminders.map((reminder) => (
+                <View key={reminder.id} style={styles.reminderCard}>
+                  <Text style={styles.reminderTitle}>
+                    {reminder.type === "SERVICE"
+                      ? "Service"
+                      : reminder.type.toLowerCase()}{" "}
+                    due
+                  </Text>
+                  <Text style={styles.reminderDetails}>
+                    {format(reminder.dueDate, "MMM d, yyyy")} · via{" "}
+                    {reminder.channels.join(", ")}
+                  </Text>
+                  {reminder.notes ? (
+                    <Text style={styles.reminderNotes}>{reminder.notes}</Text>
+                  ) : null}
+                </View>
+              ))
+            ) : (
+              <View style={styles.emptyCard}>
+                <Text style={styles.emptyBody}>
+                  No reminders scheduled.
                 </Text>
-                <Text style={styles.reminderDetails}>
-                  {format(reminder.dueDate, "MMM d, yyyy")} via{" "}
-                  {reminder.channels.join(", ")}
-                </Text>
-                {reminder.notes ? (
-                  <Text style={styles.reminderNotes}>{reminder.notes}</Text>
-                ) : null}
               </View>
-            ))
-          ) : (
-            <View style={styles.emptyCard}>
-              <Text style={styles.emptyBody}>No reminders scheduled.</Text>
-            </View>
-          )}
-        </View>
+            )}
+          </View>
         </ScrollView>
       </SafeAreaView>
     </SafeAreaProvider>
@@ -422,236 +455,255 @@ const describeWindow = (days: number) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#f8fafc",
+    backgroundColor: palette.surface,
+  },
+  centered: {
+    justifyContent: "center",
+    alignItems: "center",
   },
   scrollContainer: {
     flex: 1,
   },
   scrollContent: {
-    padding: 20,
+    paddingHorizontal: 20,
     paddingBottom: 40,
+    gap: 32,
   },
   header: {
-    marginBottom: 24,
+    marginTop: 12,
   },
   brand: {
+    fontFamily: fonts.headingMedium,
     fontSize: 12,
-    fontWeight: "600",
     letterSpacing: 1.1,
     textTransform: "uppercase",
-    color: "#334155",
+    color: palette.accent500,
   },
   title: {
     marginTop: 8,
+    fontFamily: fonts.heading,
     fontSize: 28,
-    fontWeight: "700",
-    color: "#0f172a",
+    color: palette.ink,
   },
   subtitle: {
     marginTop: 6,
+    fontFamily: fonts.bodyMedium,
     fontSize: 14,
-    color: "#475569",
     lineHeight: 20,
+    color: palette.inkSubtle,
   },
-  statsRow: {
+  statRow: {
+    marginTop: 24,
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 12,
-    marginBottom: 24,
   },
   statCard: {
-    flexBasis: "48%",
-    backgroundColor: "#ffffff",
+    minWidth: 140,
+    flexGrow: 1,
     borderRadius: 16,
+    backgroundColor: palette.surfaceRaised,
     padding: 16,
-    shadowColor: "#0f172a",
+    borderWidth: 1,
+    borderColor: palette.border,
+    shadowColor: palette.ink,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.08,
-    shadowRadius: 10,
+    shadowRadius: 12,
     elevation: 4,
   },
   statLabel: {
-    fontSize: 12,
-    fontWeight: "600",
-    textTransform: "uppercase",
+    fontFamily: fonts.bodySemibold,
+    fontSize: 11,
     letterSpacing: 0.6,
-    color: "#64748b",
+    textTransform: "uppercase",
+    color: palette.inkSubtle,
   },
   statValue: {
     marginTop: 6,
+    fontFamily: fonts.heading,
     fontSize: 22,
-    fontWeight: "700",
-    color: "#0f172a",
+    color: palette.ink,
   },
   statHelper: {
-    marginTop: 4,
+    marginTop: 2,
+    fontFamily: fonts.body,
     fontSize: 12,
-    color: "#64748b",
+    color: palette.inkSubtle,
   },
   section: {
-    marginBottom: 28,
+    gap: 16,
   },
   sectionTitle: {
+    fontFamily: fonts.heading,
     fontSize: 18,
-    fontWeight: "700",
-    color: "#0f172a",
+    color: palette.ink,
     marginBottom: 12,
   },
   loadingCard: {
     padding: 24,
     borderRadius: 16,
-    backgroundColor: "#ffffff",
+    backgroundColor: palette.surfaceRaised,
+    borderWidth: 1,
+    borderColor: palette.border,
     alignItems: "center",
     gap: 12,
-    shadowColor: "#0f172a",
-    shadowOpacity: 0.06,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 8,
-    elevation: 2,
   },
   loadingText: {
+    fontFamily: fonts.body,
     fontSize: 14,
-    color: "#475569",
+    color: palette.inkSubtle,
   },
   vehicleCard: {
-    backgroundColor: "#ffffff",
     borderRadius: 18,
+    backgroundColor: palette.surfaceRaised,
     padding: 18,
-    marginBottom: 16,
-    shadowColor: "#0f172a",
-    shadowOpacity: 0.07,
-    shadowOffset: { width: 0, height: 6 },
-    shadowRadius: 10,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: palette.border,
+    gap: 14,
   },
   vehicleHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 12,
   },
   vehicleName: {
+    fontFamily: fonts.heading,
     fontSize: 18,
-    fontWeight: "700",
-    color: "#0f172a",
+    color: palette.ink,
   },
   vehicleVin: {
-    marginTop: 2,
-    fontSize: 12,
-    letterSpacing: 0.4,
+    marginTop: 4,
+    fontFamily: fonts.mono,
+    fontSize: 11,
+    letterSpacing: 0.6,
+    color: palette.inkSubtle,
     textTransform: "uppercase",
-    color: "#94a3b8",
   },
   vehicleMeta: {
     flexDirection: "row",
-    justifyContent: "space-between",
     gap: 16,
-    marginBottom: 12,
   },
   metaColumn: {
     flex: 1,
+    gap: 4,
   },
   metaLabel: {
+    fontFamily: fonts.bodySemibold,
     fontSize: 12,
-    fontWeight: "600",
-    color: "#475569",
+    color: palette.ink,
     textTransform: "uppercase",
     letterSpacing: 0.6,
   },
   metaValue: {
-    marginTop: 6,
+    fontFamily: fonts.bodyMedium,
     fontSize: 14,
-    fontWeight: "600",
-    color: "#1e293b",
+    color: palette.ink,
   },
   metaHelper: {
-    marginTop: 2,
+    fontFamily: fonts.body,
     fontSize: 12,
-    color: "#64748b",
+    color: palette.inkSubtle,
   },
-  vehicleBadges: {
+  badgeRow: {
     flexDirection: "row",
-    flexWrap: "wrap",
     gap: 8,
+    flexWrap: "wrap",
   },
   badge: {
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
-  badgeInfo: {
-    backgroundColor: "#e0f2fe",
-  },
-  badgeDanger: {
-    backgroundColor: "#fee4e2",
-  },
-  badgeSuccess: {
-    backgroundColor: "#dcfce7",
+  badgeAccent: {
+    backgroundColor: palette.accent100,
   },
   badgeText: {
+    fontFamily: fonts.bodySemibold,
     fontSize: 12,
-    fontWeight: "600",
-    color: "#0f172a",
-  },
-  reminderList: {
-    marginTop: 14,
-    borderTopWidth: 1,
-    borderTopColor: "#e2e8f0",
-    paddingTop: 12,
-    gap: 8,
-  },
-  reminderRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  reminderType: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#1e293b",
-    textTransform: "capitalize",
-  },
-  reminderDetails: {
-    fontSize: 13,
-    color: "#475569",
-  },
-  reminderCard: {
-    backgroundColor: "#ffffff",
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: "#0f172a",
-    shadowOpacity: 0.06,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  reminderTitle: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#0f172a",
-    marginBottom: 6,
-  },
-  reminderNotes: {
-    marginTop: 4,
-    fontSize: 12,
-    color: "#64748b",
+    color: palette.accent500,
+    textTransform: "uppercase",
   },
   emptyCard: {
     padding: 24,
     borderRadius: 16,
-    backgroundColor: "#f1f5f9",
+    backgroundColor: palette.surfaceSubtle,
+    borderWidth: 1,
+    borderStyle: "dashed",
+    borderColor: palette.border,
     alignItems: "center",
     gap: 8,
   },
   emptyTitle: {
+    fontFamily: fonts.heading,
     fontSize: 16,
-    fontWeight: "600",
-    color: "#1e293b",
+    color: palette.ink,
   },
   emptyBody: {
+    fontFamily: fonts.body,
     fontSize: 13,
-    color: "#475569",
-    textAlign: "center",
     lineHeight: 18,
+    color: palette.inkSubtle,
+    textAlign: "center",
+  },
+  reminderCard: {
+    borderRadius: 16,
+    backgroundColor: palette.surfaceRaised,
+    borderWidth: 1,
+    borderColor: palette.border,
+    padding: 16,
+    gap: 4,
+  },
+  reminderTitle: {
+    fontFamily: fonts.bodySemibold,
+    fontSize: 15,
+    color: palette.ink,
+  },
+  reminderDetails: {
+    fontFamily: fonts.bodyMedium,
+    fontSize: 13,
+    color: palette.inkSubtle,
+  },
+  reminderNotes: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: palette.inkSubtle,
   },
 });
+
+type BadgeTone = "success" | "warning" | "danger" | "info";
+
+const badgePalette: Record<BadgeTone, { backgroundColor: string; color: string }> = {
+  success: { backgroundColor: "#ecfdf5", color: palette.success },
+  warning: { backgroundColor: "#fef7d6", color: palette.warning },
+  danger: { backgroundColor: "#fee2e2", color: palette.danger },
+  info: { backgroundColor: "#eef2ff", color: palette.brand600 },
+};
+
+const Badge = ({
+  tone = "info",
+  children,
+}: {
+  tone?: BadgeTone;
+  children: React.ReactNode;
+}) => (
+  <View
+    style={[
+      styles.badge,
+      {
+        backgroundColor: badgePalette[tone].backgroundColor,
+      },
+    ]}
+  >
+    <Text
+      style={[
+        styles.badgeText,
+        {
+          color: badgePalette[tone].color,
+        },
+      ]}
+    >
+      {children}
+    </Text>
+  </View>
+);

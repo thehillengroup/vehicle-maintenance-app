@@ -7,11 +7,11 @@
 }
 
 body {
-  @apply bg-slate-50 text-slate-900 antialiased;
+  @apply bg-surface text-ink antialiased font-body;
 }
 
 html {
-  @apply h-full bg-slate-50;
+  @apply h-full bg-surface;
 }
 
 * {

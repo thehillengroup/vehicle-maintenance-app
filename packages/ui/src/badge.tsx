@@ -5,10 +5,10 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 }
 
 const toneStyles: Record<NonNullable<BadgeProps["tone"]>, string> = {
-  success: "bg-emerald-100 text-emerald-700 ring-emerald-500/40",
-  warning: "bg-amber-100 text-amber-700 ring-amber-500/40",
-  danger: "bg-red-100 text-red-700 ring-red-500/40",
-  info: "bg-brand-100 text-brand-700 ring-brand-500/40",
+  success: "bg-success/10 text-success ring-success/30",
+  warning: "bg-warning/10 text-warning ring-warning/30",
+  danger: "bg-danger/10 text-danger ring-danger/30",
+  info: "bg-brand-50 text-brand-700 ring-brand-400/40",
 };
 
 export const Badge = ({ tone = "info", className, ...props }: BadgeProps) => (

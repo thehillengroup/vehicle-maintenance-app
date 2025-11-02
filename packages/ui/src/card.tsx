@@ -5,7 +5,7 @@ export type CardProps = React.HTMLAttributes<HTMLDivElement>;
 export const Card = ({ className, ...props }: CardProps) => (
   <div
     className={clsx(
-      "group relative overflow-hidden rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:shadow-lg",
+      "group relative overflow-hidden rounded-2xl border border-border/80 bg-surface-raised p-6 shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:shadow-lg",
       className,
     )}
     {...props}
@@ -17,11 +17,11 @@ export const CardHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDiv
 );
 
 export const CardTitle = ({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => (
-  <h3 className={clsx("text-lg font-semibold text-slate-900", className)} {...props} />
+  <h3 className={clsx("text-lg font-semibold text-ink font-heading", className)} {...props} />
 );
 
 export const CardDescription = ({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) => (
-  <p className={clsx("text-sm text-slate-500", className)} {...props} />
+  <p className={clsx("text-sm text-ink-subtle", className)} {...props} />
 );
 
 export const CardContent = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (

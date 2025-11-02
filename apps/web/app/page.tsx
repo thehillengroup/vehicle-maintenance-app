@@ -122,9 +122,9 @@ export default async function Page() {
             );
           })}
           {vehicles.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-200 bg-white/70 p-8 text-center text-slate-500">
-              <p className="text-base font-semibold text-slate-700">Welcome to FleetCare</p>
-              <p className="mt-2 text-sm">
+            <div className="rounded-2xl border border-dashed border-border bg-surface-raised p-8 text-center text-ink-subtle">
+              <p className="text-base font-semibold text-ink">Welcome to FleetCare</p>
+              <p className="mt-2 text-sm text-ink-subtle">
                 Start by adding your first vehicle to automatically track registration and emissions milestones.
               </p>
               <div className="mt-6 flex justify-center gap-3">
@@ -135,9 +135,9 @@ export default async function Page() {
           ) : null}
         </div>
         <aside className="space-y-4">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-sm font-semibold text-slate-700">Upcoming reminders</p>
-            <p className="mt-1 text-xs text-slate-500">
+          <div className="rounded-2xl border border-border bg-surface-raised p-6 shadow-sm">
+            <p className="text-sm font-semibold text-ink">Upcoming reminders</p>
+            <p className="mt-1 text-xs text-ink-subtle">
               {upcomingReminderCount} reminders scheduled in the next 90 days.
             </p>
             <div className="mt-4">

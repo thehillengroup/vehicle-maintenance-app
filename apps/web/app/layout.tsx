@@ -1,14 +1,23 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
 import "./globals.css";
+import { DM_Sans, Inter, JetBrains_Mono } from "next/font/google";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
+const headingFont = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-heading",
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
 });
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
+const bodyFont = Inter({
+  subsets: ["latin"],
+  variable: "--font-body",
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
+});
+const monoFont = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -26,9 +35,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full bg-slate-50">
+    <html lang="en" className="h-full bg-surface">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} min-h-full bg-slate-50 text-slate-900 antialiased`}
+        className={`${headingFont.variable} ${bodyFont.variable} ${monoFont.variable} min-h-full bg-surface text-ink antialiased font-body`}
       >
         <div className="flex min-h-screen flex-col">{children}</div>
       </body>

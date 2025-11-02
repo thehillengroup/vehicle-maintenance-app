@@ -12,13 +12,13 @@ export interface ButtonProps
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    "bg-brand-600 text-white shadow-sm shadow-brand-900/20 hover:bg-brand-700 focus-visible:outline-brand-600",
+    "bg-brand-600 text-white shadow-sm shadow-brand-900/10 hover:bg-brand-700 focus-visible:outline-brand-500",
   secondary:
-    "bg-white text-brand-700 shadow-sm hover:bg-brand-50 focus-visible:outline-brand-600",
+    "bg-surface-raised text-ink shadow-sm hover:bg-surface-subtle focus-visible:outline-brand-500",
   ghost:
-    "bg-transparent text-brand-600 hover:bg-brand-50 focus-visible:outline-brand-200",
+    "bg-transparent text-brand-600 hover:bg-brand-50/70 focus-visible:outline-brand-300",
   destructive:
-    "bg-red-600 text-white shadow-sm hover:bg-red-700 focus-visible:outline-red-600",
+    "bg-danger text-white shadow-sm hover:bg-danger/90 focus-visible:outline-danger",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
