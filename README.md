@@ -3,7 +3,7 @@
 FleetCare is a shared React + React Native workspace for managing vehicle maintenance records, registration renewals, and emissions reminders. The Turborepo houses a Next.js web portal, an Expo-powered mobile app, and shared domain packages backed by Prisma + PostgreSQL (SQLite for local development).
 
 > **Publishing reminder:** everything lives locally. When you're ready to push to GitHub, run:
-``ash
+``bash
  git remote add origin git@github.com:thehillengroup/<repo-name>.git
  git push -u origin master
 `` 
@@ -11,12 +11,12 @@ FleetCare is a shared React + React Native workspace for managing vehicle mainte
 
 ## Apps & Packages
 
-- `apps/web` – Next.js App Router site with Tailwind UI, server components, and API routes for vehicles and reminders
-- `apps/mobile` – Expo (React Native) client styled with NativeWind, consuming the same APIs and domain schemas
-- `packages/core` – Zod-powered domain models, compliance calculators, and helper utilities shared by both clients
-- `packages/db` – Prisma schema, generated client, and high-level data access helpers
-- `packages/ui` – Reusable design system primitives (Button, Card, Badge) shared across surfaces
-- `packages/eslint-config`, `packages/typescript-config` – shared tooling configuration
+- `apps/web` â€“ Next.js App Router site with Tailwind UI, server components, and API routes for vehicles and reminders
+- `apps/mobile` â€“ Expo (React Native) client styled with NativeWind, consuming the same APIs and domain schemas
+- `packages/core` â€“ Zod-powered domain models, compliance calculators, and helper utilities shared by both clients
+- `packages/db` â€“ Prisma schema, generated client, and high-level data access helpers
+- `packages/ui` â€“ Reusable design system primitives (Button, Card, Badge) shared across surfaces
+- `packages/eslint-config`, `packages/typescript-config` â€“ shared tooling configuration
 
 ## Prerequisites
 
