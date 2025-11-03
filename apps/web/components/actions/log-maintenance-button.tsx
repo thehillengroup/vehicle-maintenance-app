@@ -105,7 +105,7 @@ export const LogMaintenanceButton = ({ vehicles, onSuccess }: LogMaintenanceButt
                     </option>
                     {vehicles.map((vehicle) => (
                       <option key={vehicle.id} value={vehicle.id}>
-                        {vehicle.year} {vehicle.make} {vehicle.model} · {vehicle.vin}
+                        {vehicle.year} {vehicle.make} {vehicle.model} {vehicle.vin}
                       </option>
                     ))}
                   </select>

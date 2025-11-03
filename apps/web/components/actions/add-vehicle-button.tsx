@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FiLoader, FiPlus } from "react-icons/fi";
 import { Button } from "@repo/ui/button";
+import { US_STATES } from "../../lib/us-states";
 
 interface AddVehicleButtonProps {
   onSuccess?: () => void;
@@ -32,9 +33,7 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
       model: formData.get("model"),
       year: Number(formData.get("year")),
       vin: (formData.get("vin") as string)?.trim(),
-      registrationState: (formData.get("registrationState") as string)
-        ?.toUpperCase()
-        .slice(0, 2),
+      registrationState: formData.get("registrationState"),
       nickname: (formData.get("nickname") as string) || undefined,
       mileage: formData.get("mileage") ? Number(formData.get("mileage")) : undefined,
       fuelType: formData.get("fuelType") || "GAS",
@@ -102,6 +101,7 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
                     required
                     name="make"
                     className="rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+                    placeholder="e.g. Toyota"
                   />
                 </label>
                 <label className="flex flex-col gap-1 text-sm text-ink">
@@ -110,6 +110,7 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
                     required
                     name="model"
                     className="rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+                    placeholder="e.g. Camry"
                   />
                 </label>
                 <label className="flex flex-col gap-1 text-sm text-ink">
@@ -135,12 +136,21 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
                 </label>
                 <label className="flex flex-col gap-1 text-sm text-ink">
                   Registration state
-                  <input
+                  <select
                     required
                     name="registrationState"
-                    maxLength={2}
-                    className="uppercase rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
-                  />
+                    defaultValue=""
+                    className="rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+                  >
+                    <option value="" disabled>
+                      Select state
+                    </option>
+                    {US_STATES.map((state) => (
+                      <option key={state.value} value={state.value}>
+                        {state.label}
+                      </option>
+                    ))}
+                  </select>
                 </label>
                 <label className="flex flex-col gap-1 text-sm text-ink">
                   License plate
@@ -224,6 +234,9 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
                 </Button>
               </div>
             </form>
+            <p className="mt-4 text-xs text-ink-muted">
+              Need make/model data? Integrate the NHTSA vPIC API (https://vpic.nhtsa.dot.gov/api/) to auto-fill these fields.
+            </p>
           </div>
         </div>
       ) : null}
