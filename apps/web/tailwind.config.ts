@@ -40,6 +40,11 @@ const config: Config = {
           raised: "#ffffff",
           subtle: "#f1f5f9",
         },
+        navy: {
+          DEFAULT: "#0b1220",
+          light: "#131d33",
+          contrast: "#e7ecff",
+        },
         ink: {
           DEFAULT: "#0f172a",
           muted: "#475569",
