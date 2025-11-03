@@ -1,14 +1,13 @@
-import Link from "next/link";
 import { differenceInCalendarDays, formatDistanceToNow } from "date-fns";
 import { AppShell } from "../components/layout/app-shell";
-import { FiPlus } from "react-icons/fi";
-import { GiMechanicGarage } from "react-icons/gi";
 import { VehicleCard } from "../components/dashboard/vehicle-card";
 import { ReminderTimeline } from "../components/dashboard/reminder-timeline";
 import { StatCard } from "../components/dashboard/stat-card";
 import { Button } from "@repo/ui/button";
 import { getDemoUser } from "../lib/demo-user";
 import { getDueReminders, listVehicles } from "@repo/db";
+import { AddVehicleButton } from "../components/actions/add-vehicle-button";
+import { LogMaintenanceButton } from "../components/actions/log-maintenance-button";
 
 export default async function Page() {
   const user = await getDemoUser();
@@ -83,24 +82,8 @@ export default async function Page() {
     <AppShell
       actions={
         <div className="flex items-center gap-2">
-          <Button
-            className="border border-white/40 bg-white/10 text-black transition hover:bg-white/20"
-            asChild
-          >
-            <Link className="flex items-center gap-2" href="#">
-              <FiPlus className="h-4 w-4" />
-              Add vehicle
-            </Link>
-          </Button>
-          <Button
-            className="border border-white/40 bg-white/10 text-black transition hover:bg-white/20"
-            asChild
-          >
-            <Link className="flex items-center gap-2" href="#">
-              <GiMechanicGarage className="h-4 w-4" />
-              Log maintenance
-            </Link>
-          </Button>
+          <AddVehicleButton />
+          <LogMaintenanceButton vehicles={vehicles} />
         </div>
       }
     >
