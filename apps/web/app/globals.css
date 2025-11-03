@@ -7,11 +7,13 @@
 }
 
 body {
-  @apply bg-surface text-ink antialiased font-body;
+  @apply text-ink antialiased font-body;
+  background: radial-gradient(120% 120% at 50% 0%, #f8fafc 0%, #ffffff 55%, #eef2ff 100%);
 }
 
 html {
-  @apply h-full bg-surface;
+  @apply h-full;
+  background: #eef2ff;
 }
 
 * {
