@@ -18,9 +18,9 @@ const toneRing: Record<NonNullable<StatCardProps["tone"]>, string> = {
 };
 
 const iconMap: Record<NonNullable<StatCardProps["tone"]>, JSX.Element> = {
-  default: <FaCar className="h-5 w-5 text-brand-500" />,
-  warning: <FiClock className="h-5 w-5 text-warning" />,
-  danger: <FiAlertTriangle className="h-5 w-5 text-danger" />,
+  default: <FaCar className="h-5 w-5 text-success" />,
+  warning: <FiClock className="h-5 w-5 text-success" />,
+  danger: <FiAlertTriangle className="h-5 w-5 text-success" />,
   success: <FaRoad className="h-5 w-5 text-success" />,
 };
 

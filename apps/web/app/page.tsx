@@ -42,30 +42,40 @@ export default async function Page() {
 
   const upcomingReminderCount = reminders.length;
 
+  const latestVehicleUpdatedAt = vehicles.reduce<Date | null>((latest, vehicle) => {
+    const updated = new Date(vehicle.updatedAt);
+    if (!latest || updated > latest) {
+      return updated;
+    }
+    return latest;
+  }, null);
+
   const stats = [
     {
       title: "Vehicles managed",
       value: String(vehicles.length),
-      helper: vehicles.length ? `Last updated ${formatDistanceToNow(vehicles[0].updatedAt)} ago` : "Add your first vehicle",
+      helper: latestVehicleUpdatedAt
+        ? `Last updated ${formatDistanceToNow(latestVehicleUpdatedAt)} ago`
+        : "Add your first vehicle",
       tone: "default" as const,
     },
     {
       title: "Registration overdue",
       value: String(registrationOverdue.length),
       helper: registrationOverdue.length ? "Needs attention this week" : "All registrations current",
-      tone: registrationOverdue.length ? (registrationOverdue.length > 1 ? "danger" : "warning") : "success",
+      tone: "danger" as const,
     },
     {
       title: "Emissions overdue",
       value: String(emissionsOverdue.length),
       helper: emissionsOverdue.length ? "Schedule tests soon" : "All emissions checks up to date",
-      tone: emissionsOverdue.length ? "warning" : "success",
+      tone: "warning" as const,
     },
     {
       title: "Tracked miles",
       value: totalMileage.toLocaleString(),
       helper: "Total mileage across your garage",
-      tone: "default" as const,
+      tone: "success" as const,
     },
   ];
 
