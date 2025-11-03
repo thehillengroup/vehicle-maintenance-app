@@ -1,9 +1,11 @@
 import { clsx } from "clsx";
+import { JSX } from "react";
+import { FaCar } from "react-icons/fa";
+import { JSX } from "react";
 import {
   FiAlertTriangle,
   FiCheckCircle,
   FiClock,
-  FiTrendingUp,
 } from "react-icons/fi";
 
 interface StatCardProps {
@@ -21,7 +23,7 @@ const toneRing: Record<NonNullable<StatCardProps["tone"]>, string> = {
 };
 
 const iconMap: Record<NonNullable<StatCardProps["tone"]>, JSX.Element> = {
-  default: <FiTrendingUp className="h-5 w-5 text-brand-500" />,
+  default: <FaCar className="h-5 w-5 text-brand-500" />,
   warning: <FiClock className="h-5 w-5 text-warning" />,
   danger: <FiAlertTriangle className="h-5 w-5 text-danger" />,
   success: <FiCheckCircle className="h-5 w-5 text-success" />,
