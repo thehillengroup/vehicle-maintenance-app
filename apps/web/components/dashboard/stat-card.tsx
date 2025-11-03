@@ -1,12 +1,7 @@
 import { clsx } from "clsx";
 import { JSX } from "react";
-import { FaCar } from "react-icons/fa";
-import { JSX } from "react";
-import {
-  FiAlertTriangle,
-  FiCheckCircle,
-  FiClock,
-} from "react-icons/fi";
+import { FaCar, FaRoad } from "react-icons/fa";
+import { FiAlertTriangle, FiClock } from "react-icons/fi";
 
 interface StatCardProps {
   title: string;
@@ -26,7 +21,7 @@ const iconMap: Record<NonNullable<StatCardProps["tone"]>, JSX.Element> = {
   default: <FaCar className="h-5 w-5 text-brand-500" />,
   warning: <FiClock className="h-5 w-5 text-warning" />,
   danger: <FiAlertTriangle className="h-5 w-5 text-danger" />,
-  success: <FiCheckCircle className="h-5 w-5 text-success" />,
+  success: <FaRoad className="h-5 w-5 text-success" />,
 };
 
 export const StatCard = ({ title, value, helper, tone = "default" }: StatCardProps) => (
