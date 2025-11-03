@@ -1,29 +1,24 @@
 import Link from "next/link";
-import { clsx } from "clsx";
+import { FiLogIn } from "react-icons/fi";
+import { Button } from "@repo/ui/button";
 
-interface AppShellProps {
-  title: string;
-  subtitle?: string;
-  actions?: React.ReactNode;
-  children: React.ReactNode;
-}
-
-export const AppShell = ({ title, subtitle, actions, children }: AppShellProps) => {
+export const AppShell = ({ children, actions }: { children: React.ReactNode; actions?: React.ReactNode }) => {
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-10">
-      <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-accent-600">
-            FleetCare
-          </p>
-          <h1 className="mt-1 font-heading text-3xl font-semibold text-ink sm:text-4xl">
-            {title}
-          </h1>
-          {subtitle ? (
-            <p className="mt-2 max-w-2xl text-sm text-ink-subtle">{subtitle}</p>
-          ) : null}
+      <header className="mb-10 flex items-center justify-between border-b border-white/60 py-4">
+        <Link href="#" className="font-heading text-xl font-semibold text-ink">
+          FleetCare
+        </Link>
+        <div className="flex items-center gap-3">
+          {actions}
+          <Button
+            variant="ghost"
+            className="flex items-center gap-2 rounded-full border border-white/40 bg-white/10 px-3 py-1.5 text-sm font-medium text-ink transition hover:bg-white/20"
+          >
+            <FiLogIn className="h-4 w-4" />
+            <span className="hidden sm:inline">Log in</span>
+          </Button>
         </div>
-        <div className={clsx("flex items-center gap-3", actions ? "" : "justify-end")}>{actions}</div>
       </header>
       <main className="space-y-8">{children}</main>
       <footer className="mt-16 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-6 text-xs text-ink-subtle">

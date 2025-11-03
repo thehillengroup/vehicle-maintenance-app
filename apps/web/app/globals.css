@@ -9,12 +9,11 @@
 body {
   @apply text-ink antialiased font-body;
   background: #085078;
-  background-image: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+  background-image: linear-gradient(to right, #85d8ce, #085078);
 }
 
 html {
   @apply h-full;
-  background: #eef2ff;
 }
 
 * {
