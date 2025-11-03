@@ -2,6 +2,7 @@ import Link from "next/link";
 import { differenceInCalendarDays, formatDistanceToNow } from "date-fns";
 import { AppShell } from "../components/layout/app-shell";
 import { FiPlus } from "react-icons/fi";
+import { GiMechanicGarage } from "react-icons/gi";
 import { VehicleCard } from "../components/dashboard/vehicle-card";
 import { ReminderTimeline } from "../components/dashboard/reminder-timeline";
 import { StatCard } from "../components/dashboard/stat-card";
@@ -73,7 +74,7 @@ export default async function Page() {
       actions={
         <div className="flex items-center gap-2">
           <Button
-            className="border border-white/40 bg-white/10 text-ink transition hover:bg-white/20"
+            className="border border-white/40 bg-white/10 text-black transition hover:bg-white/20"
             asChild
           >
             <Link className="flex items-center gap-2" href="#">
@@ -81,8 +82,14 @@ export default async function Page() {
               Add vehicle
             </Link>
           </Button>
-          <Button variant="ghost" asChild>
-            <Link href="#">Log maintenance</Link>
+          <Button
+            className="border border-white/40 bg-white/10 text-black transition hover:bg-white/20"
+            asChild
+          >
+            <Link className="flex items-center gap-2" href="#">
+              <GiMechanicGarage className="h-4 w-4" />
+              Log maintenance
+            </Link>
           </Button>
         </div>
       }
