@@ -3,10 +3,27 @@ import { getDemoUser } from "../../../lib/demo-user";
 import { listVehicles, upsertVehicle } from "@repo/db";
 import { vehicleUpsertSchema } from "@repo/core";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+const withCors = (response: NextResponse) => {
+  Object.entries(corsHeaders).forEach(([key, value]) =>
+    response.headers.set(key, value),
+  );
+  return response;
+};
+
+export function OPTIONS() {
+  return withCors(new NextResponse(null, { status: 204 }));
+}
+
 export async function GET() {
   const user = await getDemoUser();
   const vehicles = await listVehicles(user.id);
-  return NextResponse.json({ data: vehicles });
+  return withCors(NextResponse.json({ data: vehicles }));
 }
 
 export async function POST(request: Request) {
@@ -23,5 +40,5 @@ export async function POST(request: Request) {
 
   const vehicle = await upsertVehicle({ userId: user.id, payload: parsed.data });
 
-  return NextResponse.json({ data: vehicle }, { status: 201 });
+  return withCors(NextResponse.json({ data: vehicle }, { status: 201 }));
 }
