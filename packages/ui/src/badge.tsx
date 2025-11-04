@@ -8,7 +8,7 @@ const toneStyles: Record<NonNullable<BadgeProps["tone"]>, string> = {
   success: "bg-success/10 text-success ring-success/30",
   warning: "bg-warning/10 text-warning ring-warning/30",
   danger: "bg-danger/10 text-danger ring-danger/30",
-  info: "bg-brand-50 text-brand-700 ring-brand-400/40",
+  info: "bg-[#eef2ff] text-[#4338ca] ring-[#818cf8]/40",
 };
 
 export const Badge = ({ tone = "info", className, ...props }: BadgeProps) => (

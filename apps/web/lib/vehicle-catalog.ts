@@ -440,7 +440,12 @@ export const getMakeOptions = () =>
 
 export const getModelOptions = (make: string) => {
   const makeEntry = VEHICLE_CATALOG.find((entry) => entry.make === make);
-  return makeEntry ? makeEntry.models.map((model) => model.name) : [];
+  if (!makeEntry) {
+    return [];
+  }
+  return makeEntry.models.map((model) => model.name).sort((a, b) =>
+    a.localeCompare(b),
+  );
 };
 
 export const getTrimOptions = (make: string, model: string) => {
@@ -448,3 +453,5 @@ export const getTrimOptions = (make: string, model: string) => {
   const modelEntry = makeEntry?.models.find((item) => item.name === model);
   return modelEntry ? modelEntry.trims : [];
 };
+
+

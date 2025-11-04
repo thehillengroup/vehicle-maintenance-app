@@ -2,6 +2,7 @@
 
 import {
   FormEvent,
+  KeyboardEvent,
   useEffect,
   useId,
   useMemo,
@@ -9,7 +10,7 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
-import { FiLoader, FiPlus } from "react-icons/fi";
+import { FiLoader, FiPlus, FiX } from "react-icons/fi";
 import { Button } from "@repo/ui/button";
 import { US_STATES } from "../../lib/us-states";
 import {
@@ -27,49 +28,58 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedMake, setSelectedMake] = useState("");
-  const [selectedModel, setSelectedModel] = useState("");
-  const [selectedTrim, setSelectedTrim] = useState("");
-  const [makeQuery, setMakeQuery] = useState("");
-  const [modelQuery, setModelQuery] = useState("");
-  const [trimQuery, setTrimQuery] = useState("");
-  const [showMakeSuggestions, setShowMakeSuggestions] = useState(false);
-  const [showModelSuggestions, setShowModelSuggestions] = useState(false);
-  const [showTrimSuggestions, setShowTrimSuggestions] = useState(false);
-  const [highlightedMakeIndex, setHighlightedMakeIndex] = useState(-1);
-  const [highlightedModelIndex, setHighlightedModelIndex] = useState(-1);
-  const [highlightedTrimIndex, setHighlightedTrimIndex] = useState(-1);
-  const makeInputId = useId();
-  const modelInputId = useId();
-  const trimInputId = useId();
-  const makeListboxId = `${makeInputId}-listbox`;
-  const modelListboxId = `${modelInputId}-listbox`;
-  const trimListboxId = `${trimInputId}-listbox`;
-  const makeBlurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const modelBlurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const trimBlurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  /**
+   * --- Make Autocomplete ----------------------------------------------------
+   * We start by building a reliable make picker. Once this works well,
+   * we can layer in model/trim/year with the same foundation.
+   */
+  const makeInputRef = useRef<HTMLInputElement | null>(null);
+  const makeListboxId = useId();
   const makeOptions = useMemo(() => getMakeOptions(), []);
-  const modelOptions = useMemo(
-    () => (selectedMake ? getModelOptions(selectedMake) : []),
-    [selectedMake],
-  );
-  const trimOptions = useMemo(
-    () =>
-      selectedMake && selectedModel
-        ? getTrimOptions(selectedMake, selectedModel)
-        : [],
-    [selectedMake, selectedModel],
-  );
+  const [makeQuery, setMakeQuery] = useState("");
+  const [selectedMake, setSelectedMake] = useState("");
+  const [showMakeSuggestions, setShowMakeSuggestions] = useState(false);
+  const [highlightedMakeIndex, setHighlightedMakeIndex] = useState(-1);
+
+  const modelInputRef = useRef<HTMLInputElement | null>(null);
+  const modelListboxId = useId();
+  const [selectedModel, setSelectedModel] = useState("");
+  const [modelQuery, setModelQuery] = useState("");
+  const [showModelSuggestions, setShowModelSuggestions] = useState(false);
+  const [highlightedModelIndex, setHighlightedModelIndex] = useState(-1);
+
+  const trimInputRef = useRef<HTMLInputElement | null>(null);
+  const trimListboxId = useId();
+  const [selectedTrim, setSelectedTrim] = useState("");
+  const [trimQuery, setTrimQuery] = useState("");
+  const [showTrimSuggestions, setShowTrimSuggestions] = useState(false);
+  const [highlightedTrimIndex, setHighlightedTrimIndex] = useState(-1);
+
+  const yearInputRef = useRef<HTMLInputElement | null>(null);
+  const yearListboxId = useId();
+  const [selectedYear, setSelectedYear] = useState("");
+  const [yearQuery, setYearQuery] = useState("");
+  const [showYearSuggestions, setShowYearSuggestions] = useState(false);
+  const [highlightedYearIndex, setHighlightedYearIndex] = useState(-1);
+
   const filteredMakeOptions = useMemo(() => {
     const search = makeQuery.trim().toLowerCase();
     if (!search) {
       return makeOptions;
     }
-    return makeOptions.filter((make) =>
-      make.toLowerCase().includes(search),
+    return makeOptions.filter((option) =>
+      option.toLowerCase().includes(search),
     );
   }, [makeOptions, makeQuery]);
+
+  const modelOptions = useMemo(() => {
+    if (!selectedMake) {
+      return [];
+    }
+    return getModelOptions(selectedMake);
+  }, [selectedMake]);
+
   const filteredModelOptions = useMemo(() => {
     if (!selectedMake) {
       return [];
@@ -78,171 +88,169 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
     if (!search) {
       return modelOptions;
     }
-    return modelOptions.filter((model) =>
-      model.toLowerCase().includes(search),
+    return modelOptions.filter((option) =>
+      option.toLowerCase().includes(search),
     );
   }, [modelOptions, modelQuery, selectedMake]);
+
+  const trimOptions = useMemo(() => {
+    if (!selectedMake || !selectedModel) {
+      return [];
+    }
+    return getTrimOptions(selectedMake, selectedModel);
+  }, [selectedMake, selectedModel]);
+
   const filteredTrimOptions = useMemo(() => {
-    if (!selectedModel) {
+    if (!selectedMake || !selectedModel) {
       return [];
     }
     const search = trimQuery.trim().toLowerCase();
     if (!search) {
       return trimOptions;
     }
-    return trimOptions.filter((trim) =>
-      trim.toLowerCase().includes(search),
+    return trimOptions.filter((option) =>
+      option.toLowerCase().includes(search),
     );
-  }, [trimOptions, trimQuery, selectedModel]);
+  }, [selectedMake, selectedModel, trimOptions, trimQuery]);
+
+  const yearOptions = useMemo(() => {
+    const currentYear = new Date().getFullYear() + 1;
+    const options: string[] = [];
+    for (let year = currentYear; year >= 1980; year -= 1) {
+      options.push(String(year));
+    }
+    return options;
+  }, []);
+
+  const filteredYearOptions = useMemo(() => {
+    const search = yearQuery.trim();
+    if (!search) {
+      return yearOptions;
+    }
+    return yearOptions.filter((option) =>
+      option.toLowerCase().includes(search.toLowerCase()),
+    );
+  }, [yearOptions, yearQuery]);
 
   useEffect(() => {
     if (!open) {
-      setSelectedMake("");
-      setSelectedModel("");
-      setSelectedTrim("");
       setMakeQuery("");
-      setModelQuery("");
-      setTrimQuery("");
+      setSelectedMake("");
       setShowMakeSuggestions(false);
-      setShowModelSuggestions(false);
-      setShowTrimSuggestions(false);
       setHighlightedMakeIndex(-1);
+      setModelQuery("");
+      setSelectedModel("");
+      setShowModelSuggestions(false);
       setHighlightedModelIndex(-1);
+      setTrimQuery("");
+      setSelectedTrim("");
+      setShowTrimSuggestions(false);
       setHighlightedTrimIndex(-1);
-      setError(null);
+      setYearQuery("");
+      setSelectedYear("");
+      setShowYearSuggestions(false);
+      setHighlightedYearIndex(-1);
     }
   }, [open]);
 
-  useEffect(() => {
-    setSelectedModel("");
-    setSelectedTrim("");
-    setModelQuery("");
-    setTrimQuery("");
-    setShowModelSuggestions(false);
-    setShowTrimSuggestions(false);
-    setHighlightedModelIndex(-1);
-    setHighlightedTrimIndex(-1);
-  }, [selectedMake]);
-
-  useEffect(() => {
-    setSelectedTrim("");
-    setTrimQuery("");
-    setShowTrimSuggestions(false);
-    setHighlightedTrimIndex(-1);
-  }, [selectedModel]);
-
-  useEffect(() => {
-    if (filteredMakeOptions.length === 0) {
-      setHighlightedMakeIndex(-1);
-      return;
-    }
-    setHighlightedMakeIndex((prev) =>
-      prev >= filteredMakeOptions.length ? filteredMakeOptions.length - 1 : prev,
-    );
-  }, [filteredMakeOptions]);
-  useEffect(() => {
-    if (filteredModelOptions.length === 0) {
-      setHighlightedModelIndex(-1);
-      return;
-    }
-    setHighlightedModelIndex((prev) =>
-      prev >= filteredModelOptions.length ? filteredModelOptions.length - 1 : prev,
-    );
-  }, [filteredModelOptions]);
-  useEffect(() => {
-    if (filteredTrimOptions.length === 0) {
-      setHighlightedTrimIndex(-1);
-      return;
-    }
-    setHighlightedTrimIndex((prev) =>
-      prev >= filteredTrimOptions.length ? filteredTrimOptions.length - 1 : prev,
-    );
-  }, [filteredTrimOptions]);
-
-  const selectMake = (make: string) => {
-    setSelectedMake(make);
-    setMakeQuery(make);
+  const selectMake = (value: string) => {
+    setSelectedMake(value);
+    setMakeQuery(value);
     setShowMakeSuggestions(false);
     setHighlightedMakeIndex(-1);
+    setSelectedModel("");
+    setModelQuery("");
+    setShowModelSuggestions(false);
+    setHighlightedModelIndex(-1);
+    setSelectedTrim("");
+    setTrimQuery("");
+    setShowTrimSuggestions(false);
+    setHighlightedTrimIndex(-1);
   };
 
-  const commitMakeFromQuery = () => {
-    const match = makeOptions.find(
-      (make) => make.toLowerCase() === makeQuery.trim().toLowerCase(),
-    );
-    if (match) {
-      selectMake(match);
-    } else {
-      if (selectedMake) {
-        setSelectedMake("");
-      }
-    }
-  };
-
-  const cancelMakeBlurTimeout = () => {
-    if (makeBlurTimeoutRef.current) {
-      window.clearTimeout(makeBlurTimeoutRef.current);
-      makeBlurTimeoutRef.current = null;
-    }
-  };
-
-  const handleMakeInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    cancelMakeBlurTimeout();
+  const handleMakeChange = (value: string) => {
     setMakeQuery(value);
     setShowMakeSuggestions(true);
     setHighlightedMakeIndex(-1);
-
-    const match = makeOptions.find(
-      (make) => make.toLowerCase() === value.trim().toLowerCase(),
-    );
-    if (match) {
-      if (selectedMake !== match) {
-        setSelectedMake(match);
-      }
-    } else if (selectedMake !== "") {
+    if (!value.trim()) {
       setSelectedMake("");
+      setSelectedModel("");
+      setModelQuery("");
+      setShowModelSuggestions(false);
+      setHighlightedModelIndex(-1);
+      setSelectedTrim("");
+      setTrimQuery("");
+      setShowTrimSuggestions(false);
+      setHighlightedTrimIndex(-1);
     }
   };
 
-  const handleMakeInputFocus = () => {
-    cancelMakeBlurTimeout();
-    setShowMakeSuggestions(true);
-  };
-
-  const handleMakeInputBlur = () => {
-    makeBlurTimeoutRef.current = window.setTimeout(() => {
-      commitMakeFromQuery();
+  const handleMakeBlur = () => {
+    requestAnimationFrame(() => {
+      const active = document.activeElement;
+      if (makeInputRef.current && active === makeInputRef.current) {
+        return;
+      }
+      const match = filteredMakeOptions.find(
+        (option) => option.toLowerCase() === makeQuery.trim().toLowerCase(),
+      );
+      if (match) {
+        if (match !== selectedMake) {
+          selectMake(match);
+        } else {
+          setMakeQuery(match);
+        }
+      } else if (makeQuery.trim()) {
+        const firstOption = filteredMakeOptions[0];
+        if (firstOption) {
+          selectMake(firstOption);
+        } else {
+          setSelectedMake("");
+          setSelectedModel("");
+          setModelQuery("");
+          setShowModelSuggestions(false);
+          setHighlightedModelIndex(-1);
+          setSelectedTrim("");
+          setTrimQuery("");
+          setShowTrimSuggestions(false);
+          setHighlightedTrimIndex(-1);
+        }
+      } else if (!makeQuery.trim()) {
+        setSelectedMake("");
+        setSelectedModel("");
+        setModelQuery("");
+        setShowModelSuggestions(false);
+        setHighlightedModelIndex(-1);
+        setSelectedTrim("");
+        setTrimQuery("");
+        setShowTrimSuggestions(false);
+        setHighlightedTrimIndex(-1);
+      }
       setShowMakeSuggestions(false);
-    }, 100);
+      setHighlightedMakeIndex(-1);
+    });
   };
 
-  const handleMakeInputKeyDown = (
-    event: React.KeyboardEvent<HTMLInputElement>,
-  ) => {
+  const handleMakeKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (!filteredMakeOptions.length) {
+      return;
+    }
+
     if (event.key === "ArrowDown") {
       event.preventDefault();
-      if (!showMakeSuggestions) {
-        setShowMakeSuggestions(true);
-      }
-      if (filteredMakeOptions.length > 0) {
-        setHighlightedMakeIndex((prev) =>
-          prev < filteredMakeOptions.length - 1 ? prev + 1 : 0,
-        );
-      }
+      setShowMakeSuggestions(true);
+      setHighlightedMakeIndex((prev) =>
+        prev < filteredMakeOptions.length - 1 ? prev + 1 : 0,
+      );
       return;
     }
 
     if (event.key === "ArrowUp") {
       event.preventDefault();
-      if (!showMakeSuggestions) {
-        setShowMakeSuggestions(true);
-      }
-      if (filteredMakeOptions.length > 0) {
-        setHighlightedMakeIndex((prev) =>
-          prev <= 0 ? filteredMakeOptions.length - 1 : prev - 1,
-        );
-      }
+      setShowMakeSuggestions(true);
+      setHighlightedMakeIndex((prev) =>
+        prev <= 0 ? filteredMakeOptions.length - 1 : prev - 1,
+      );
       return;
     }
 
@@ -253,35 +261,27 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
         highlightedMakeIndex < filteredMakeOptions.length
       ) {
         event.preventDefault();
-        selectMake(filteredMakeOptions[highlightedMakeIndex]);
+        const option = filteredMakeOptions[highlightedMakeIndex];
+        if (typeof option !== "string") {
+          setShowMakeSuggestions(false);
+          return;
+        }
+        selectMake(option);
+        setShowMakeSuggestions(false);
         return;
       }
-      commitMakeFromQuery();
       return;
     }
 
     if (event.key === "Escape") {
-      event.preventDefault();
       setShowMakeSuggestions(false);
       setHighlightedMakeIndex(-1);
     }
   };
 
-  const handleMakeSuggestionClick = (make: string) => {
-    cancelMakeBlurTimeout();
-    selectMake(make);
-  };
-
-  const cancelModelBlurTimeout = () => {
-    if (modelBlurTimeoutRef.current) {
-      window.clearTimeout(modelBlurTimeoutRef.current);
-      modelBlurTimeoutRef.current = null;
-    }
-  };
-
-  const selectModel = (model: string) => {
-    setSelectedModel(model);
-    setModelQuery(model);
+  const selectModel = (value: string) => {
+    setSelectedModel(value);
+    setModelQuery(value);
     setShowModelSuggestions(false);
     setHighlightedModelIndex(-1);
     setSelectedTrim("");
@@ -290,209 +290,120 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
     setHighlightedTrimIndex(-1);
   };
 
-  const commitModelFromQuery = () => {
+  const handleModelChange = (value: string) => {
     if (!selectedMake) return;
-    const match = modelOptions.find(
-      (model) => model.toLowerCase() === modelQuery.trim().toLowerCase(),
-    );
-    if (match) {
-      selectModel(match);
-    } else {
-      if (selectedModel) {
-        setSelectedModel("");
-      }
-    }
-  };
-
-  const handleModelInputChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    if (!selectedMake) return;
-    const value = event.target.value;
-    cancelModelBlurTimeout();
     setModelQuery(value);
     setShowModelSuggestions(true);
     setHighlightedModelIndex(-1);
-
-    const match = modelOptions.find(
-      (model) => model.toLowerCase() === value.trim().toLowerCase(),
-    );
-    if (match) {
-      if (selectedModel !== match) {
-        selectModel(match);
-      }
-    } else if (selectedModel !== "") {
+    setSelectedTrim("");
+    setTrimQuery("");
+    setShowTrimSuggestions(false);
+    setHighlightedTrimIndex(-1);
+    if (!value.trim()) {
       setSelectedModel("");
     }
   };
 
-  const handleModelInputFocus = () => {
-    if (!selectedMake) return;
-    cancelModelBlurTimeout();
-    setShowModelSuggestions(true);
-  };
-
-  const handleModelInputBlur = () => {
-    cancelModelBlurTimeout();
-    modelBlurTimeoutRef.current = window.setTimeout(() => {
-      commitModelFromQuery();
-      setShowModelSuggestions(false);
-    }, 100);
-  };
-
-  const handleModelInputKeyDown = (
-    event: React.KeyboardEvent<HTMLInputElement>,
-  ) => {
-    if (!selectedMake) return;
-
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      if (!showModelSuggestions) {
-        setShowModelSuggestions(true);
-      }
-      if (filteredModelOptions.length > 0) {
-        setHighlightedModelIndex((prev) =>
-          prev < filteredModelOptions.length - 1 ? prev + 1 : 0,
-        );
-      }
-      return;
-    }
-
-    if (event.key === "ArrowUp") {
-      event.preventDefault();
-      if (!showModelSuggestions) {
-        setShowModelSuggestions(true);
-      }
-      if (filteredModelOptions.length > 0) {
-        setHighlightedModelIndex((prev) =>
-          prev <= 0 ? filteredModelOptions.length - 1 : prev - 1,
-        );
-      }
-      return;
-    }
-
-    if (event.key === "Enter") {
-      if (
-        showModelSuggestions &&
-        highlightedModelIndex >= 0 &&
-        highlightedModelIndex < filteredModelOptions.length
-      ) {
-        event.preventDefault();
-        selectModel(filteredModelOptions[highlightedModelIndex]);
+  const handleModelBlur = () => {
+    requestAnimationFrame(() => {
+      const active = document.activeElement;
+      if (modelInputRef.current && active === modelInputRef.current) {
         return;
       }
-      commitModelFromQuery();
-      return;
-    }
-
-    if (event.key === "Escape") {
-      event.preventDefault();
+      if (!selectedMake) {
+        setShowModelSuggestions(false);
+        return;
+      }
+      const match = filteredModelOptions.find(
+        (option) => option.toLowerCase() === modelQuery.trim().toLowerCase(),
+      );
+      if (match) {
+        if (match !== selectedModel) {
+          selectModel(match);
+        } else {
+          setModelQuery(match);
+        }
+      } else if (!modelQuery.trim()) {
+        setSelectedModel("");
+        setSelectedTrim("");
+        setTrimQuery("");
+        setShowTrimSuggestions(false);
+        setHighlightedTrimIndex(-1);
+      }
       setShowModelSuggestions(false);
       setHighlightedModelIndex(-1);
-    }
+    });
   };
 
-  const handleModelSuggestionClick = (model: string) => {
-    cancelModelBlurTimeout();
-    selectModel(model);
-  };
-
-  const cancelTrimBlurTimeout = () => {
-    if (trimBlurTimeoutRef.current) {
-      window.clearTimeout(trimBlurTimeoutRef.current);
-      trimBlurTimeoutRef.current = null;
-    }
-  };
-
-  const selectTrim = (trim: string) => {
-    setSelectedTrim(trim);
-    setTrimQuery(trim);
+  const selectTrim = (value: string) => {
+    setSelectedTrim(value);
+    setTrimQuery(value);
     setShowTrimSuggestions(false);
     setHighlightedTrimIndex(-1);
   };
 
-  const commitTrimFromQuery = () => {
-    if (!selectedModel) return;
-    if (trimOptions.length === 0) {
-      setSelectedTrim("");
-      return;
-    }
-    const match = trimOptions.find(
-      (trim) => trim.toLowerCase() === trimQuery.trim().toLowerCase(),
-    );
-    if (match) {
-      selectTrim(match);
-    } else {
-      if (selectedTrim) {
-        setSelectedTrim("");
-      }
-    }
-  };
-
-  const handleTrimInputChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    if (!selectedModel || trimOptions.length === 0) return;
-    const value = event.target.value;
-    cancelTrimBlurTimeout();
+  const handleTrimChange = (value: string) => {
+    if (!selectedMake || !selectedModel) return;
     setTrimQuery(value);
     setShowTrimSuggestions(true);
     setHighlightedTrimIndex(-1);
-
-    const match = trimOptions.find(
-      (trim) => trim.toLowerCase() === value.trim().toLowerCase(),
-    );
-    if (match) {
-      if (selectedTrim !== match) {
-        selectTrim(match);
-      }
-    } else if (selectedTrim !== "") {
+    if (!value.trim()) {
       setSelectedTrim("");
     }
   };
 
-  const handleTrimInputFocus = () => {
-    if (!selectedModel || trimOptions.length === 0) return;
-    cancelTrimBlurTimeout();
-    setShowTrimSuggestions(true);
-  };
-
-  const handleTrimInputBlur = () => {
-    cancelTrimBlurTimeout();
-    trimBlurTimeoutRef.current = window.setTimeout(() => {
-      commitTrimFromQuery();
+  const handleTrimBlur = () => {
+    requestAnimationFrame(() => {
+      const active = document.activeElement;
+      if (trimInputRef.current && active === trimInputRef.current) {
+        return;
+      }
+      if (!selectedMake || !selectedModel) {
+        setShowTrimSuggestions(false);
+        return;
+      }
+      const match = filteredTrimOptions.find(
+        (option) => option.toLowerCase() === trimQuery.trim().toLowerCase(),
+      );
+      if (match) {
+        setTrimQuery(match);
+        setSelectedTrim(match);
+      } else if (!trimQuery.trim()) {
+        setSelectedTrim("");
+      } else {
+        const firstOption = filteredTrimOptions[0];
+        if (firstOption) {
+          selectTrim(firstOption);
+        } else {
+          setSelectedTrim("");
+          setTrimQuery("");
+        }
+      }
       setShowTrimSuggestions(false);
-    }, 100);
+      setHighlightedTrimIndex(-1);
+    });
   };
 
-  const handleTrimInputKeyDown = (
-    event: React.KeyboardEvent<HTMLInputElement>,
-  ) => {
-    if (!selectedModel || trimOptions.length === 0) return;
+  const handleTrimKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (!selectedMake || !selectedModel || !filteredTrimOptions.length) {
+      return;
+    }
 
     if (event.key === "ArrowDown") {
       event.preventDefault();
-      if (!showTrimSuggestions) {
-        setShowTrimSuggestions(true);
-      }
-      if (filteredTrimOptions.length > 0) {
-        setHighlightedTrimIndex((prev) =>
-          prev < filteredTrimOptions.length - 1 ? prev + 1 : 0,
-        );
-      }
+      setShowTrimSuggestions(true);
+      setHighlightedTrimIndex((prev) =>
+        prev < filteredTrimOptions.length - 1 ? prev + 1 : 0,
+      );
       return;
     }
 
     if (event.key === "ArrowUp") {
       event.preventDefault();
-      if (!showTrimSuggestions) {
-        setShowTrimSuggestions(true);
-      }
-      if (filteredTrimOptions.length > 0) {
-        setHighlightedTrimIndex((prev) =>
-          prev <= 0 ? filteredTrimOptions.length - 1 : prev - 1,
-        );
-      }
+      setShowTrimSuggestions(true);
+      setHighlightedTrimIndex((prev) =>
+        prev <= 0 ? filteredTrimOptions.length - 1 : prev - 1,
+      );
       return;
     }
 
@@ -503,68 +414,303 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
         highlightedTrimIndex < filteredTrimOptions.length
       ) {
         event.preventDefault();
-        selectTrim(filteredTrimOptions[highlightedTrimIndex]);
+        const option = filteredTrimOptions[highlightedTrimIndex];
+        if (typeof option !== "string") {
+          setShowTrimSuggestions(false);
+          return;
+        }
+        selectTrim(option);
+        setShowTrimSuggestions(false);
         return;
       }
-      commitTrimFromQuery();
       return;
     }
 
     if (event.key === "Escape") {
-      event.preventDefault();
       setShowTrimSuggestions(false);
       setHighlightedTrimIndex(-1);
     }
   };
 
-  const handleTrimSuggestionClick = (trim: string) => {
-    cancelTrimBlurTimeout();
-    selectTrim(trim);
+  const selectYear = (value: string) => {
+    setSelectedYear(value);
+    setYearQuery(value);
+    setShowYearSuggestions(false);
+    setHighlightedYearIndex(-1);
   };
 
+  const handleYearChange = (value: string) => {
+    const sanitized = value.replace(/[^\d]/g, "").slice(0, 4);
+    setYearQuery(sanitized);
+    setShowYearSuggestions(true);
+    setHighlightedYearIndex(-1);
+    if (!sanitized.trim()) {
+      setSelectedYear("");
+    }
+  };
+
+  const handleYearBlur = () => {
+    requestAnimationFrame(() => {
+      const active = document.activeElement;
+      if (yearInputRef.current && active === yearInputRef.current) {
+        return;
+      }
+      const match = filteredYearOptions.find(
+        (option) => option === yearQuery.trim(),
+      );
+      if (match) {
+        selectYear(match);
+      } else if (!yearQuery.trim()) {
+        setSelectedYear("");
+      } else {
+        const firstOption = filteredYearOptions[0];
+        if (firstOption) {
+          selectYear(firstOption);
+        } else {
+          setSelectedYear("");
+          setYearQuery("");
+        }
+      }
+      setShowYearSuggestions(false);
+      setHighlightedYearIndex(-1);
+    });
+  };
+
+  const handleYearKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (!filteredYearOptions.length) {
+      return;
+    }
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setShowYearSuggestions(true);
+      setHighlightedYearIndex((prev) =>
+        prev < filteredYearOptions.length - 1 ? prev + 1 : 0,
+      );
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setShowYearSuggestions(true);
+      setHighlightedYearIndex((prev) =>
+        prev <= 0 ? filteredYearOptions.length - 1 : prev - 1,
+      );
+      return;
+    }
+
+    if (event.key === "Enter") {
+      if (
+        showYearSuggestions &&
+        highlightedYearIndex >= 0 &&
+        highlightedYearIndex < filteredYearOptions.length
+      ) {
+        event.preventDefault();
+        const option = filteredYearOptions[highlightedYearIndex];
+        if (typeof option !== "string") {
+          setShowYearSuggestions(false);
+          return;
+        }
+        selectYear(option);
+        setShowYearSuggestions(false);
+        return;
+      }
+      return;
+    }
+
+    if (event.key === "Escape") {
+      setShowYearSuggestions(false);
+      setHighlightedYearIndex(-1);
+    }
+  };
+
+  const clearMake = () => {
+    setMakeQuery("");
+    setSelectedMake("");
+    setShowMakeSuggestions(false);
+    setHighlightedMakeIndex(-1);
+    setModelQuery("");
+    setSelectedModel("");
+    setShowModelSuggestions(false);
+    setHighlightedModelIndex(-1);
+    setTrimQuery("");
+    setSelectedTrim("");
+    setShowTrimSuggestions(false);
+    setHighlightedTrimIndex(-1);
+    makeInputRef.current?.focus();
+  };
+
+  const clearModel = () => {
+    setModelQuery("");
+    setSelectedModel("");
+    setShowModelSuggestions(false);
+    setHighlightedModelIndex(-1);
+    setTrimQuery("");
+    setSelectedTrim("");
+    setShowTrimSuggestions(false);
+    setHighlightedTrimIndex(-1);
+    modelInputRef.current?.focus();
+  };
+
+  const clearTrim = () => {
+    setTrimQuery("");
+    setSelectedTrim("");
+    setShowTrimSuggestions(false);
+    setHighlightedTrimIndex(-1);
+    trimInputRef.current?.focus();
+  };
+
+  const clearYear = () => {
+    setYearQuery("");
+    setSelectedYear("");
+    setShowYearSuggestions(false);
+    setHighlightedYearIndex(-1);
+    yearInputRef.current?.focus();
+  };
+
+  useEffect(() => {
+    const inputEl = modelInputRef.current;
+    if (!selectedMake || !inputEl) {
+      return;
+    }
+    if (document.activeElement !== inputEl) {
+      return;
+    }
+    if (selectedModel) {
+      return;
+    }
+    setShowModelSuggestions(true);
+  }, [selectedMake, selectedModel, filteredModelOptions.length]);
+
+  useEffect(() => {
+    const inputEl = trimInputRef.current;
+    if (!selectedMake || !selectedModel || !inputEl) {
+      return;
+    }
+    if (document.activeElement !== inputEl) {
+      return;
+    }
+    if (selectedTrim) {
+      return;
+    }
+    setShowTrimSuggestions(true);
+  }, [
+    selectedMake,
+    selectedModel,
+    selectedTrim,
+    filteredTrimOptions.length,
+  ]);
+
+  useEffect(() => {
+    const inputEl = yearInputRef.current;
+    if (!inputEl) {
+      return;
+    }
+    if (document.activeElement !== inputEl) {
+      return;
+    }
+    if (selectedYear) {
+      return;
+    }
+    setShowYearSuggestions(true);
+  }, [selectedYear, filteredYearOptions.length]);
+
+  const handleModelKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (!selectedMake || !filteredModelOptions.length) {
+      return;
+    }
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setShowModelSuggestions(true);
+      setHighlightedModelIndex((prev) =>
+        prev < filteredModelOptions.length - 1 ? prev + 1 : 0,
+      );
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setShowModelSuggestions(true);
+      setHighlightedModelIndex((prev) =>
+        prev <= 0 ? filteredModelOptions.length - 1 : prev - 1,
+      );
+      return;
+    }
+
+    if (event.key === "Enter") {
+      if (
+        showModelSuggestions &&
+        highlightedModelIndex >= 0 &&
+        highlightedModelIndex < filteredModelOptions.length
+      ) {
+        event.preventDefault();
+        const option = filteredModelOptions[highlightedModelIndex];
+        if (typeof option !== "string") {
+          setShowModelSuggestions(false);
+          return;
+        }
+        selectModel(option);
+        setShowModelSuggestions(false);
+        return;
+      }
+      return;
+    }
+
+    if (event.key === "Escape") {
+      setShowModelSuggestions(false);
+      setHighlightedModelIndex(-1);
+    }
+  };
+
+  /**
+   * -------------------------------------------------------------------------
+   * Submit handler: make and model values now come from our controlled state.
+   * Other fields remain simple inputs until we upgrade them.
+   */
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitting(true);
     setError(null);
 
     const formData = new FormData(event.currentTarget);
+    const makeValue =
+      selectedMake || (formData.get("make") as string)?.trim() || "";
+    const modelValue =
+      selectedModel || (formData.get("model") as string)?.trim() || "";
+    const trimValue =
+      selectedTrim || (formData.get("trim") as string)?.trim() || "";
+    const yearValue =
+      selectedYear || (formData.get("year") as string)?.trim() || "";
+    const resolvedYear =
+      yearValue && yearOptions.includes(yearValue) ? yearValue : "";
 
-    const registrationRenewedOn = formData.get("registrationRenewedOn") as
-      | string
-      | null;
-    const emissionsTestedOn = formData.get("emissionsTestedOn") as string | null;
-
-    if (!selectedMake) {
-      setError("Please select a make from the suggestions.");
+    if (!resolvedYear) {
+      setError("Please choose a valid year.");
       setSubmitting(false);
-      return;
-    }
-
-    if (!selectedModel) {
-      setError("Please select a model.");
-      setSubmitting(false);
-      return;
-    }
-
-    if (trimOptions.length > 0 && !selectedTrim) {
-      setError("Please select a trim.");
-      setSubmitting(false);
+      setShowYearSuggestions(true);
+      setHighlightedYearIndex(-1);
+      yearInputRef.current?.focus();
       return;
     }
 
     const payload = {
-      make: selectedMake,
-      model: selectedModel,
-      trim: selectedTrim || undefined,
-      year: Number(formData.get("year")),
+      make: makeValue,
+      model: modelValue,
+      trim: trimValue || null,
+      year: Number(resolvedYear),
       vin: (formData.get("vin") as string)?.trim(),
-      registrationState: formData.get("registrationState"),
-      nickname: (formData.get("nickname") as string) || undefined,
-      mileage: formData.get("mileage") ? Number(formData.get("mileage")) : undefined,
+      registrationState: (formData.get("registrationState") as string)
+        ?.toUpperCase()
+        .slice(0, 2),
+      nickname: formData.get("nickname") || null,
+      mileage: formData.get("mileage")
+        ? Number(formData.get("mileage"))
+        : null,
       fuelType: formData.get("fuelType") || "GAS",
-      registrationRenewedOn: registrationRenewedOn || undefined,
-      emissionsTestedOn: emissionsTestedOn || undefined,
-      licensePlate: (formData.get("licensePlate") as string) || undefined,
+      registrationRenewedOn: formData.get("registrationRenewedOn") || null,
+      emissionsTestedOn: formData.get("emissionsTestedOn") || null,
+      licensePlate: formData.get("licensePlate") || null,
     };
 
     try {
@@ -598,7 +744,6 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
       <Button
         className="border border-white/40 bg-white/10 text-black transition hover:bg-white/20"
         onClick={() => setOpen(true)}
-        type="button"
       >
         <FiPlus className="h-4 w-4" />
         Add vehicle
@@ -624,14 +769,13 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
                   Make
                   <div className="relative">
                     <input
-                      required
-                      id={makeInputId}
+                      ref={makeInputRef}
                       name="make"
                       value={makeQuery}
-                      onChange={handleMakeInputChange}
-                      onFocus={handleMakeInputFocus}
-                      onBlur={handleMakeInputBlur}
-                      onKeyDown={handleMakeInputKeyDown}
+                      onChange={(event) => handleMakeChange(event.target.value)}
+                      onFocus={() => setShowMakeSuggestions(true)}
+                      onBlur={handleMakeBlur}
+                      onKeyDown={handleMakeKeyDown}
                       role="combobox"
                       aria-autocomplete="list"
                       aria-expanded={showMakeSuggestions}
@@ -644,59 +788,64 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
                       autoComplete="off"
                       spellCheck={false}
                       placeholder="Start typing a make"
-                      className="w-full rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+                      required
+                      className="w-full rounded-lg border border-border py-2 pl-3 pr-9 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
                     />
-                    {showMakeSuggestions ? (
+                    {makeQuery ? (
+                      <button
+                        type="button"
+                        onClick={clearMake}
+                        aria-label="Clear make"
+                        className="absolute inset-y-0 right-2 flex items-center text-ink-muted transition hover:text-ink"
+                      >
+                        <FiX className="h-4 w-4" />
+                      </button>
+                    ) : null}
+                    {showMakeSuggestions && filteredMakeOptions.length ? (
                       <ul
                         id={makeListboxId}
                         role="listbox"
                         className="absolute left-0 right-0 z-20 mt-1 max-h-60 overflow-auto rounded-lg border border-border bg-white p-1 shadow-lg"
                       >
-                        {filteredMakeOptions.length === 0 ? (
-                          <li
-                            className="px-3 py-2 text-sm text-ink-muted"
-                            role="presentation"
-                          >
-                            No matches found
+                        {filteredMakeOptions.map((option, index) => (
+                          <li key={option} role="presentation">
+                            <button
+                              type="button"
+                              role="option"
+                              id={`${makeListboxId}-option-${index}`}
+                              aria-selected={highlightedMakeIndex === index}
+                              className={`w-full rounded-md px-3 py-2 text-left text-sm transition ${
+                                highlightedMakeIndex === index
+                                  ? "bg-brand-100 text-brand-900"
+                                  : "text-ink hover:bg-ink-muted/10"
+                              }`}
+                              onMouseDown={(event) => event.preventDefault()}
+                              onClick={() => selectMake(option)}
+                            >
+                              {option}
+                            </button>
                           </li>
-                        ) : (
-                          filteredMakeOptions.map((make, index) => (
-                            <li key={make} role="presentation">
-                              <button
-                                type="button"
-                                role="option"
-                                id={`${makeListboxId}-option-${index}`}
-                                aria-selected={highlightedMakeIndex === index}
-                                onMouseDown={(event) => event.preventDefault()}
-                                onClick={() => handleMakeSuggestionClick(make)}
-                                className={`w-full rounded-md px-3 py-2 text-left text-sm transition ${
-                                  highlightedMakeIndex === index
-                                    ? "bg-brand-100 text-brand-900"
-                                    : "text-ink hover:bg-ink-muted/10"
-                                }`}
-                              >
-                                {make}
-                              </button>
-                            </li>
-                          ))
-                        )}
+                        ))}
                       </ul>
                     ) : null}
                   </div>
                 </label>
+
                 <label className="flex flex-col gap-1 text-sm text-ink">
                   Model
                   <div className="relative">
                     <input
-                      required
-                      id={modelInputId}
+                      ref={modelInputRef}
                       name="model"
                       value={modelQuery}
-                      onChange={handleModelInputChange}
-                      onFocus={handleModelInputFocus}
-                      onBlur={handleModelInputBlur}
-                      onKeyDown={handleModelInputKeyDown}
-                      disabled={!selectedMake || modelOptions.length === 0}
+                      onChange={(event) => handleModelChange(event.target.value)}
+                      onFocus={() => {
+                        if (!selectedModel) {
+                          setShowModelSuggestions(true);
+                        }
+                      }}
+                      onBlur={handleModelBlur}
+                      onKeyDown={handleModelKeyDown}
                       role="combobox"
                       aria-autocomplete="list"
                       aria-expanded={showModelSuggestions}
@@ -709,18 +858,26 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
                       autoComplete="off"
                       spellCheck={false}
                       placeholder={
-                        !selectedMake
-                          ? "Select a make first"
-                          : modelOptions.length === 0
-                            ? "No models listed"
-                            : "Start typing a model"
+                        selectedMake
+                          ? "Start typing a model"
+                          : "Select a make first"
                       }
-                      className={`w-full rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200 ${
-                        !selectedMake || modelOptions.length === 0
-                          ? "bg-gray-100 text-ink-muted"
-                          : ""
+                      disabled={!selectedMake}
+                      required
+                      className={`w-full rounded-lg border border-border py-2 pl-3 pr-9 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200 ${
+                        selectedMake ? "" : "bg-gray-100 text-ink-muted"
                       }`}
                     />
+                    {selectedMake && (modelQuery || selectedModel) ? (
+                      <button
+                        type="button"
+                        onClick={clearModel}
+                        aria-label="Clear model"
+                        className="absolute inset-y-0 right-2 flex items-center text-ink-muted transition hover:text-ink"
+                      >
+                        <FiX className="h-4 w-4" />
+                      </button>
+                    ) : null}
                     {showModelSuggestions && selectedMake ? (
                       <ul
                         id={modelListboxId}
@@ -729,28 +886,28 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
                       >
                         {filteredModelOptions.length === 0 ? (
                           <li
-                            className="px-3 py-2 text-sm text-ink-muted"
                             role="presentation"
+                            className="px-3 py-2 text-sm text-ink-muted"
                           >
                             No matches found
                           </li>
                         ) : (
-                          filteredModelOptions.map((model, index) => (
-                            <li key={model} role="presentation">
+                          filteredModelOptions.map((option, index) => (
+                            <li key={option} role="presentation">
                               <button
                                 type="button"
                                 role="option"
                                 id={`${modelListboxId}-option-${index}`}
                                 aria-selected={highlightedModelIndex === index}
                                 onMouseDown={(event) => event.preventDefault()}
-                                onClick={() => handleModelSuggestionClick(model)}
+                                onClick={() => selectModel(option)}
                                 className={`w-full rounded-md px-3 py-2 text-left text-sm transition ${
                                   highlightedModelIndex === index
                                     ? "bg-brand-100 text-brand-900"
                                     : "text-ink hover:bg-ink-muted/10"
                                 }`}
                               >
-                                {model}
+                                {option}
                               </button>
                             </li>
                           ))
@@ -759,19 +916,22 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
                     ) : null}
                   </div>
                 </label>
+
                 <label className="flex flex-col gap-1 text-sm text-ink">
                   Trim
                   <div className="relative">
                     <input
-                      id={trimInputId}
+                      ref={trimInputRef}
                       name="trim"
                       value={trimQuery}
-                      onChange={handleTrimInputChange}
-                      onFocus={handleTrimInputFocus}
-                      onBlur={handleTrimInputBlur}
-                      onKeyDown={handleTrimInputKeyDown}
-                      disabled={!selectedModel || trimOptions.length === 0}
-                      required={trimOptions.length > 0}
+                      onChange={(event) => handleTrimChange(event.target.value)}
+                      onFocus={() => {
+                        if (!selectedTrim) {
+                          setShowTrimSuggestions(true);
+                        }
+                      }}
+                      onBlur={handleTrimBlur}
+                      onKeyDown={handleTrimKeyDown}
                       role="combobox"
                       aria-autocomplete="list"
                       aria-expanded={showTrimSuggestions}
@@ -784,19 +944,30 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
                       autoComplete="off"
                       spellCheck={false}
                       placeholder={
-                        !selectedModel
-                          ? "Select a model first"
-                          : trimOptions.length === 0
-                            ? "No trims listed"
-                            : "Start typing a trim"
+                        selectedModel
+                          ? "Start typing a trim"
+                          : "Select a model first"
                       }
-                      className={`w-full rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200 ${
-                        !selectedModel || trimOptions.length === 0
-                          ? "bg-gray-100 text-ink-muted"
-                          : ""
+                      disabled={!selectedMake || !selectedModel}
+                      className={`w-full rounded-lg border border-border py-2 pl-3 pr-9 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200 ${
+                        selectedMake && selectedModel
+                          ? ""
+                          : "bg-gray-100 text-ink-muted"
                       }`}
                     />
-                    {showTrimSuggestions && selectedModel && trimOptions.length > 0 ? (
+                    {selectedMake &&
+                    selectedModel &&
+                    (trimQuery || selectedTrim) ? (
+                      <button
+                        type="button"
+                        onClick={clearTrim}
+                        aria-label="Clear trim"
+                        className="absolute inset-y-0 right-2 flex items-center text-ink-muted transition hover:text-ink"
+                      >
+                        <FiX className="h-4 w-4" />
+                      </button>
+                    ) : null}
+                    {showTrimSuggestions && selectedMake && selectedModel ? (
                       <ul
                         id={trimListboxId}
                         role="listbox"
@@ -804,28 +975,28 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
                       >
                         {filteredTrimOptions.length === 0 ? (
                           <li
-                            className="px-3 py-2 text-sm text-ink-muted"
                             role="presentation"
+                            className="px-3 py-2 text-sm text-ink-muted"
                           >
                             No matches found
                           </li>
                         ) : (
-                          filteredTrimOptions.map((trim, index) => (
-                            <li key={trim} role="presentation">
+                          filteredTrimOptions.map((option, index) => (
+                            <li key={option} role="presentation">
                               <button
                                 type="button"
                                 role="option"
                                 id={`${trimListboxId}-option-${index}`}
                                 aria-selected={highlightedTrimIndex === index}
                                 onMouseDown={(event) => event.preventDefault()}
-                                onClick={() => handleTrimSuggestionClick(trim)}
+                                onClick={() => selectTrim(option)}
                                 className={`w-full rounded-md px-3 py-2 text-left text-sm transition ${
                                   highlightedTrimIndex === index
                                     ? "bg-brand-100 text-brand-900"
                                     : "text-ink hover:bg-ink-muted/10"
                                 }`}
                               >
-                                {trim}
+                                {option}
                               </button>
                             </li>
                           ))
@@ -834,16 +1005,86 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
                     ) : null}
                   </div>
                 </label>
+                {/* Remaining fields will be upgraded next */}
                 <label className="flex flex-col gap-1 text-sm text-ink">
                   Year
-                  <input
-                    required
-                    name="year"
-                    type="number"
-                    min="1980"
-                    max={new Date().getFullYear() + 1}
-                    className="rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
-                  />
+                  <div className="relative">
+                    <input
+                      ref={yearInputRef}
+                      name="year"
+                      value={yearQuery}
+                      onChange={(event) => handleYearChange(event.target.value)}
+                      onFocus={() => {
+                        if (!selectedYear) {
+                          setShowYearSuggestions(true);
+                        }
+                      }}
+                      onBlur={handleYearBlur}
+                      onKeyDown={handleYearKeyDown}
+                      role="combobox"
+                      aria-autocomplete="list"
+                      aria-expanded={showYearSuggestions}
+                      aria-controls={yearListboxId}
+                      aria-activedescendant={
+                        showYearSuggestions && highlightedYearIndex >= 0
+                          ? `${yearListboxId}-option-${highlightedYearIndex}`
+                          : undefined
+                      }
+                      autoComplete="off"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={4}
+                      placeholder="Enter year"
+                      required
+                      className="w-full rounded-lg border border-border py-2 pl-3 pr-9 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+                    />
+                    {yearQuery ? (
+                      <button
+                        type="button"
+                        onClick={clearYear}
+                        aria-label="Clear year"
+                        className="absolute inset-y-0 right-2 flex items-center text-ink-muted transition hover:text-ink"
+                      >
+                        <FiX className="h-4 w-4" />
+                      </button>
+                    ) : null}
+                    {showYearSuggestions ? (
+                      <ul
+                        id={yearListboxId}
+                        role="listbox"
+                        className="absolute left-0 right-0 z-20 mt-1 max-h-60 overflow-auto rounded-lg border border-border bg-white p-1 shadow-lg"
+                      >
+                        {filteredYearOptions.length === 0 ? (
+                          <li
+                            role="presentation"
+                            className="px-3 py-2 text-sm text-ink-muted"
+                          >
+                            No matches found
+                          </li>
+                        ) : (
+                          filteredYearOptions.map((option, index) => (
+                            <li key={option} role="presentation">
+                              <button
+                                type="button"
+                                role="option"
+                                id={`${yearListboxId}-option-${index}`}
+                                aria-selected={highlightedYearIndex === index}
+                                onMouseDown={(event) => event.preventDefault()}
+                                onClick={() => selectYear(option)}
+                                className={`w-full rounded-md px-3 py-2 text-left text-sm transition ${
+                                  highlightedYearIndex === index
+                                    ? "bg-brand-100 text-brand-900"
+                                    : "text-ink hover:bg-ink-muted/10"
+                                }`}
+                              >
+                                {option}
+                              </button>
+                            </li>
+                          ))
+                        )}
+                      </ul>
+                    ) : null}
+                  </div>
                 </label>
                 <label className="flex flex-col gap-1 text-sm text-ink">
                   VIN
@@ -955,14 +1196,15 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
                 </Button>
               </div>
             </form>
-            <p className="mt-4 text-xs text-ink-muted">
-              
-            </p>
           </div>
         </div>
       ) : null}
     </>
   );
 };
+
+
+
+
 
 
