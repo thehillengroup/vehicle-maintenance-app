@@ -2,7 +2,7 @@
 
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { FiLoader } from "react-icons/fi";
+import { FiLoader, FiX } from "react-icons/fi";
 import { GiMechanicGarage } from "react-icons/gi";
 import { Button } from "@repo/ui/button";
 import type { Vehicle } from "@repo/core";
@@ -86,8 +86,9 @@ export const LogMaintenanceButton = ({ vehicles, onSuccess }: LogMaintenanceButt
                 type="button"
                 onClick={() => setOpen(false)}
                 className="text-sm text-ink-subtle transition hover:text-ink"
+                aria-label="Close"
               >
-                Close
+                <FiX className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
             <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
@@ -202,4 +203,3 @@ export const LogMaintenanceButton = ({ vehicles, onSuccess }: LogMaintenanceButt
     </>
   );
 };
-

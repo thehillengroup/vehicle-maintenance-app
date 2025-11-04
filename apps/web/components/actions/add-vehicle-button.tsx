@@ -299,6 +299,10 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
     setTrimQuery("");
     setShowTrimSuggestions(false);
     setHighlightedTrimIndex(-1);
+    setYearQuery("");
+    setSelectedYear("");
+    setShowYearSuggestions(false);
+    setHighlightedYearIndex(-1);
     if (!value.trim()) {
       setSelectedModel("");
     }
@@ -329,6 +333,10 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
         setTrimQuery("");
         setShowTrimSuggestions(false);
         setHighlightedTrimIndex(-1);
+        setYearQuery("");
+        setSelectedYear("");
+        setShowYearSuggestions(false);
+        setHighlightedYearIndex(-1);
       }
       setShowModelSuggestions(false);
       setHighlightedModelIndex(-1);
@@ -336,10 +344,17 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
   };
 
   const selectTrim = (value: string) => {
+    const isChanging = value !== selectedTrim;
     setSelectedTrim(value);
     setTrimQuery(value);
     setShowTrimSuggestions(false);
     setHighlightedTrimIndex(-1);
+    if (isChanging) {
+      setYearQuery("");
+      setSelectedYear("");
+      setShowYearSuggestions(false);
+      setHighlightedYearIndex(-1);
+    }
   };
 
   const handleTrimChange = (value: string) => {
@@ -347,6 +362,10 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
     setTrimQuery(value);
     setShowTrimSuggestions(true);
     setHighlightedTrimIndex(-1);
+    setYearQuery("");
+    setSelectedYear("");
+    setShowYearSuggestions(false);
+    setHighlightedYearIndex(-1);
     if (!value.trim()) {
       setSelectedTrim("");
     }
@@ -366,6 +385,8 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
         (option) => option.toLowerCase() === trimQuery.trim().toLowerCase(),
       );
       if (match) {
+        if (match !== selectedTrim) {
+        }
         setTrimQuery(match);
         setSelectedTrim(match);
       } else if (!trimQuery.trim()) {
@@ -377,6 +398,10 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
         } else {
           setSelectedTrim("");
           setTrimQuery("");
+          setYearQuery("");
+          setSelectedYear("");
+          setShowYearSuggestions(false);
+          setHighlightedYearIndex(-1);
         }
       }
       setShowTrimSuggestions(false);
@@ -440,6 +465,13 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
   };
 
   const handleYearChange = (value: string) => {
+    if (!selectedTrim) {
+      setYearQuery("");
+      setSelectedYear("");
+      setShowYearSuggestions(false);
+      setHighlightedYearIndex(-1);
+      return;
+    }
     const sanitized = value.replace(/[^\d]/g, "").slice(0, 4);
     setYearQuery(sanitized);
     setShowYearSuggestions(true);
@@ -453,6 +485,11 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
     requestAnimationFrame(() => {
       const active = document.activeElement;
       if (yearInputRef.current && active === yearInputRef.current) {
+        return;
+      }
+      if (!selectedTrim) {
+        setShowYearSuggestions(false);
+        setHighlightedYearIndex(-1);
         return;
       }
       const match = filteredYearOptions.find(
@@ -477,7 +514,7 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
   };
 
   const handleYearKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (!filteredYearOptions.length) {
+    if (!selectedTrim || !filteredYearOptions.length) {
       return;
     }
 
@@ -557,6 +594,10 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
     setSelectedTrim("");
     setShowTrimSuggestions(false);
     setHighlightedTrimIndex(-1);
+    setYearQuery("");
+    setSelectedYear("");
+    setShowYearSuggestions(false);
+    setHighlightedYearIndex(-1);
     trimInputRef.current?.focus();
   };
 
@@ -603,7 +644,7 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
 
   useEffect(() => {
     const inputEl = yearInputRef.current;
-    if (!inputEl) {
+    if (!inputEl || !selectedTrim) {
       return;
     }
     if (document.activeElement !== inputEl) {
@@ -613,7 +654,7 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
       return;
     }
     setShowYearSuggestions(true);
-  }, [selectedYear, filteredYearOptions.length]);
+  }, [selectedTrim, selectedYear, filteredYearOptions.length]);
 
   const handleModelKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (!selectedMake || !filteredModelOptions.length) {
@@ -685,12 +726,29 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
     const resolvedYear =
       yearValue && yearOptions.includes(yearValue) ? yearValue : "";
 
+    if (!trimValue) {
+      setError("Please choose a trim before selecting a year.");
+      setSubmitting(false);
+      setYearQuery("");
+      setSelectedYear("");
+      setShowYearSuggestions(false);
+      setHighlightedYearIndex(-1);
+      if (selectedMake && selectedModel) {
+        setShowTrimSuggestions(true);
+        setHighlightedTrimIndex(-1);
+      }
+      trimInputRef.current?.focus();
+      return;
+    }
+
     if (!resolvedYear) {
       setError("Please choose a valid year.");
       setSubmitting(false);
-      setShowYearSuggestions(true);
-      setHighlightedYearIndex(-1);
-      yearInputRef.current?.focus();
+      if (selectedTrim) {
+        setShowYearSuggestions(true);
+        setHighlightedYearIndex(-1);
+        yearInputRef.current?.focus();
+      }
       return;
     }
 
@@ -759,8 +817,9 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
                 type="button"
                 onClick={() => setOpen(false)}
                 className="text-sm text-ink-subtle transition hover:text-ink"
+                aria-label="Close"
               >
-                Close
+                <FiX className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
             <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
@@ -1015,6 +1074,9 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
                       value={yearQuery}
                       onChange={(event) => handleYearChange(event.target.value)}
                       onFocus={() => {
+                        if (!selectedTrim) {
+                          return;
+                        }
                         if (!selectedYear) {
                           setShowYearSuggestions(true);
                         }
@@ -1023,10 +1085,10 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
                       onKeyDown={handleYearKeyDown}
                       role="combobox"
                       aria-autocomplete="list"
-                      aria-expanded={showYearSuggestions}
+                      aria-expanded={Boolean(selectedTrim && showYearSuggestions)}
                       aria-controls={yearListboxId}
                       aria-activedescendant={
-                        showYearSuggestions && highlightedYearIndex >= 0
+                        selectedTrim && showYearSuggestions && highlightedYearIndex >= 0
                           ? `${yearListboxId}-option-${highlightedYearIndex}`
                           : undefined
                       }
@@ -1036,9 +1098,12 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
                       maxLength={4}
                       placeholder="Enter year"
                       required
-                      className="w-full rounded-lg border border-border py-2 pl-3 pr-9 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+                      disabled={!selectedTrim}
+                      className={`w-full rounded-lg border border-border py-2 pl-3 pr-9 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200 ${
+                        selectedTrim ? "" : "bg-gray-100 text-ink-muted cursor-not-allowed"
+                      }`}
                     />
-                    {yearQuery ? (
+                    {selectedTrim && yearQuery ? (
                       <button
                         type="button"
                         onClick={clearYear}
@@ -1048,7 +1113,7 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
                         <FiX className="h-4 w-4" />
                       </button>
                     ) : null}
-                    {showYearSuggestions ? (
+                    {showYearSuggestions && selectedTrim ? (
                       <ul
                         id={yearListboxId}
                         role="listbox"
