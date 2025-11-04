@@ -1135,15 +1135,6 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
                   </select>
                 </label>
                 <label className="flex flex-col gap-1 text-sm text-ink">
-                  Mileage
-                  <input
-                    name="mileage"
-                    type="number"
-                    min="0"
-                    className="rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
-                  />
-                </label>
-                <label className="flex flex-col gap-1 text-sm text-ink">
                   Registration renewed on
                   <input
                     name="registrationRenewedOn"
@@ -1156,6 +1147,15 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
                   <input
                     name="emissionsTestedOn"
                     type="date"
+                    className="rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm text-ink">
+                  Mileage
+                  <input
+                    name="mileage"
+                    type="number"
+                    min="0"
                     className="rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
                   />
                 </label>
