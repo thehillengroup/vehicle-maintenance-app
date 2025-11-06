@@ -4,6 +4,25 @@ import { z } from "zod";
 export const fuelTypeSchema = z.enum(["GAS", "DIESEL", "HYBRID", "EV"] as const);
 export type FuelType = z.infer<typeof fuelTypeSchema>;
 
+export const vehicleTypeSchema = z.enum(
+  [
+    "SEDAN",
+    "COUPE",
+    "SPORTS_CAR",
+    "SUV",
+    "MOTORCYCLE",
+    "CROSSOVER",
+  ] as const,
+);
+
+export type VehicleType = z.infer<typeof vehicleTypeSchema>;
+
+export const vehiclePurposeSchema = z.enum(
+  ["DAILY_DRIVER", "COMMUTER", "WEEKENDER", "UTILITY_VEHICLE"] as const,
+);
+
+export type VehiclePurpose = z.infer<typeof vehiclePurposeSchema>;
+
 export const reminderTypeSchema = z.enum([
   "REGISTRATION",
   "EMISSIONS",
@@ -67,6 +86,8 @@ export const vehicleSchema = z.object({
   licensePlate: z.string().nullable(),
   registrationState: z.string().length(2),
   fuelType: fuelTypeSchema.optional().default("GAS"),
+  purpose: vehiclePurposeSchema,
+  vehicleType: vehicleTypeSchema,
   registrationRenewedOn: z.coerce.date(),
   registrationDueOn: z.coerce.date(),
   emissionsTestedOn: z.coerce.date().nullable(),
@@ -102,6 +123,8 @@ export const vehicleUpsertSchema = vehicleSchema
         return typeof value === "string" ? parseISO(value) : value;
       }),
     fuelType: fuelTypeSchema.optional(),
+    purpose: vehiclePurposeSchema,
+    vehicleType: vehicleTypeSchema,
   });
 
 export type VehicleUpsertInput = z.infer<typeof vehicleUpsertSchema>;

@@ -2,7 +2,7 @@
 
 import {
   FormEvent,
-  KeyboardEvent,
+  KeyboardEvent as ReactKeyboardEvent,
   useEffect,
   useId,
   useMemo,
@@ -18,6 +18,27 @@ import {
   getModelOptions,
   getTrimOptions,
 } from "../../lib/vehicle-catalog";
+import { DatePicker } from "../ui/date-picker";
+
+const VEHICLE_TYPE_OPTIONS = [
+  { value: "SEDAN", label: "Sedan" },
+  { value: "COUPE", label: "Coupe" },
+  { value: "SPORTS_CAR", label: "Sports Car" },
+  { value: "SUV", label: "SUV" },
+  { value: "MOTORCYCLE", label: "Motorcycle" },
+  { value: "CROSSOVER", label: "Crossover" },
+] as const;
+
+const DEFAULT_VEHICLE_TYPE = VEHICLE_TYPE_OPTIONS[0].value;
+
+const VEHICLE_PURPOSE_OPTIONS = [
+  { value: "DAILY_DRIVER", label: "Daily Driver" },
+  { value: "COMMUTER", label: "Commuter" },
+  { value: "WEEKENDER", label: "Weekender" },
+  { value: "UTILITY_VEHICLE", label: "Utility Vehicle" },
+] as const;
+
+const DEFAULT_VEHICLE_PURPOSE = VEHICLE_PURPOSE_OPTIONS[0].value;
 
 interface AddVehicleButtonProps {
   onSuccess?: () => void;
@@ -55,6 +76,8 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
   const [trimQuery, setTrimQuery] = useState("");
   const [showTrimSuggestions, setShowTrimSuggestions] = useState(false);
   const [highlightedTrimIndex, setHighlightedTrimIndex] = useState(-1);
+  const [vehicleType, setVehicleType] = useState<string>(DEFAULT_VEHICLE_TYPE);
+  const [purpose, setPurpose] = useState<string>(DEFAULT_VEHICLE_PURPOSE);
 
   const yearInputRef = useRef<HTMLInputElement | null>(null);
   const yearListboxId = useId();
@@ -150,6 +173,8 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
       setSelectedYear("");
       setShowYearSuggestions(false);
       setHighlightedYearIndex(-1);
+      setVehicleType(DEFAULT_VEHICLE_TYPE);
+      setPurpose(DEFAULT_VEHICLE_PURPOSE);
     }
   }, [open]);
 
@@ -184,6 +209,19 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
       setHighlightedTrimIndex(-1);
     }
   };
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setOpen(false);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
 
   const handleMakeBlur = () => {
     requestAnimationFrame(() => {
@@ -231,7 +269,7 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
     });
   };
 
-  const handleMakeKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+  const handleMakeKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
     if (!filteredMakeOptions.length) {
       return;
     }
@@ -409,7 +447,7 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
     });
   };
 
-  const handleTrimKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+  const handleTrimKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
     if (!selectedMake || !selectedModel || !filteredTrimOptions.length) {
       return;
     }
@@ -513,7 +551,7 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
     });
   };
 
-  const handleYearKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+  const handleYearKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
     if (!selectedTrim || !filteredYearOptions.length) {
       return;
     }
@@ -574,6 +612,8 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
     setSelectedTrim("");
     setShowTrimSuggestions(false);
     setHighlightedTrimIndex(-1);
+    setVehicleType(DEFAULT_VEHICLE_TYPE);
+    setPurpose(DEFAULT_VEHICLE_PURPOSE);
     makeInputRef.current?.focus();
   };
 
@@ -656,7 +696,7 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
     setShowYearSuggestions(true);
   }, [selectedTrim, selectedYear, filteredYearOptions.length]);
 
-  const handleModelKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+  const handleModelKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
     if (!selectedMake || !filteredModelOptions.length) {
       return;
     }
@@ -725,6 +765,8 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
       selectedYear || (formData.get("year") as string)?.trim() || "";
     const resolvedYear =
       yearValue && yearOptions.includes(yearValue) ? yearValue : "";
+    const vehicleTypeValue = vehicleType;
+    const purposeValue = purpose;
 
     if (!trimValue) {
       setError("Please choose a trim before selecting a year.");
@@ -765,7 +807,9 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
       mileage: formData.get("mileage")
         ? Number(formData.get("mileage"))
         : null,
-      fuelType: formData.get("fuelType") || "GAS",
+      fuelType: "GAS",
+      purpose: purposeValue,
+      vehicleType: vehicleTypeValue,
       registrationRenewedOn: formData.get("registrationRenewedOn") || null,
       emissionsTestedOn: formData.get("emissionsTestedOn") || null,
       licensePlate: formData.get("licensePlate") || null,
@@ -1187,32 +1231,48 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
                   />
                 </label>
                 <label className="flex flex-col gap-1 text-sm text-ink">
-                  Fuel type
+                  Purpose
                   <select
-                    name="fuelType"
-                    defaultValue="GAS"
+                    name="purpose"
+                    value={purpose}
+                    onChange={(event) => setPurpose(event.target.value)}
                     className="rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
                   >
-                    <option value="GAS">Gasoline</option>
-                    <option value="DIESEL">Diesel</option>
-                    <option value="HYBRID">Hybrid</option>
-                    <option value="EV">Electric</option>
+                    {VEHICLE_PURPOSE_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="flex flex-col gap-1 text-sm text-ink">
+                  Vehicle type
+                  <select
+                    name="vehicleType"
+                    value={vehicleType}
+                    onChange={(event) => setVehicleType(event.target.value)}
+                    required
+                    className="rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+                  >
+                    {VEHICLE_TYPE_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
                   </select>
                 </label>
                 <label className="flex flex-col gap-1 text-sm text-ink">
                   Registration renewed on
-                  <input
+                  <DatePicker
                     name="registrationRenewedOn"
-                    type="date"
-                    className="rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+                    placeholder="Select date"
                   />
                 </label>
                 <label className="flex flex-col gap-1 text-sm text-ink">
                   Emissions tested on
-                  <input
+                  <DatePicker
                     name="emissionsTestedOn"
-                    type="date"
-                    className="rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+                    placeholder="Select date"
                   />
                 </label>
                 <label className="flex flex-col gap-1 text-sm text-ink">

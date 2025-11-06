@@ -9,7 +9,7 @@ import {
 } from "@repo/core";
 import type { Reminder, Vehicle } from "@repo/core";
 import { addDays, isBefore } from "date-fns";
-import { prisma } from "./client";
+import { prisma } from "./client.ts";
 
 const vehicleSelect = {
   id: true,
@@ -23,6 +23,8 @@ const vehicleSelect = {
   licensePlate: true,
   registrationState: true,
   fuelType: true,
+  purpose: true,
+  vehicleType: true,
   registrationRenewedOn: true,
   registrationDueOn: true,
   emissionsTestedOn: true,
@@ -86,6 +88,8 @@ export const upsertVehicle = async ({
     licensePlate: data.licensePlate,
     registrationState: data.registrationState,
     fuelType: data.fuelType ?? "GAS",
+    purpose: data.purpose,
+    vehicleType: data.vehicleType,
     registrationRenewedOn: data.registrationRenewedOn,
     emissionsTestedOn: data.emissionsTestedOn,
     registrationDueOn: compliance.registrationDueOn,
@@ -115,6 +119,22 @@ export const upsertVehicle = async ({
       });
 
   return vehicleSchema.parse(result);
+};
+
+export const deleteVehicleById = async (userId: string, vehicleId: string) => {
+  const result = await prisma.vehicle.deleteMany({
+    where: {
+      id: vehicleId,
+      userId,
+    },
+  });
+
+  if (result.count === 0) {
+    const error = new Error("Vehicle not found");
+    // @ts-expect-error augmenting for API response usage
+    error.status = 404;
+    throw error;
+  }
 };
 
 export const getVehicleDetail = async (

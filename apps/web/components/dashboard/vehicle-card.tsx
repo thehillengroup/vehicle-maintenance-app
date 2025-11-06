@@ -1,5 +1,6 @@
 import { differenceInCalendarDays, format } from "date-fns";
 import { Badge } from "@repo/ui/badge";
+import { VehicleActions } from "./vehicle-actions";
 import {
   Card,
   CardContent,
@@ -27,6 +28,15 @@ interface VehicleCardProps {
   }>;
 }
 
+const vehicleTypeLabel: Record<Vehicle["vehicleType"], string> = {
+  SEDAN: "Sedan",
+  COUPE: "Coupe",
+  SPORTS_CAR: "Sports Car",
+  SUV: "SUV",
+  MOTORCYCLE: "Motorcycle",
+  CROSSOVER: "Crossover",
+};
+
 const describeWindow = (days: number) => {
   if (days < 0) return `${Math.abs(days)} days overdue`;
   if (days === 0) return "Due today";
@@ -52,14 +62,11 @@ export const VehicleCard = ({ vehicle, compliance, openReminders }: VehicleCardP
         <CardDescription className="flex flex-wrap items-center gap-3 text-xs uppercase tracking-wide text-ink-muted">
           <span className="font-semibold text-ink">VIN:</span>
           <span className="font-mono text-ink-muted">{vehicle.vin}</span>
-          {vehicle.licensePlate ? (
-            <span className="rounded-full bg-surface-subtle px-2 py-0.5 text-ink-muted">
-              Plate {vehicle.licensePlate}
-            </span>
-          ) : null}
-          <span className="rounded-full bg-surface-subtle px-2 py-0.5 text-ink-muted">
-            {vehicle.registrationState} - {vehicle.fuelType}
-          </span>
+        </CardDescription>
+        <CardDescription className="text-xs uppercase tracking-wide text-ink-muted">
+          {vehicleTypeLabel[vehicle.vehicleType]}
+          {vehicle.licensePlate ? ` · Plate ${vehicle.licensePlate}` : ""}
+          {` · ${vehicle.registrationState} - ${vehicle.fuelType}`}
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-6 sm:grid-cols-2">
@@ -92,16 +99,19 @@ export const VehicleCard = ({ vehicle, compliance, openReminders }: VehicleCardP
           </p>
         </div>
       </CardContent>
-      <CardFooter className="flex flex-wrap gap-2">
-        {openReminders.length ? (
-          openReminders.map((reminder) => (
-            <Badge key={reminder.id} tone={reminder.type === "SERVICE" ? "warning" : "danger"}>
-              {reminder.type.toLowerCase()} - {format(reminder.dueDate, "MMM d")}
-            </Badge>
-          ))
-        ) : (
-          <Badge tone="success">No active reminders</Badge>
-        )}
+      <CardFooter className="flex items-center justify-between">
+        <div className="flex flex-wrap gap-2">
+          {openReminders.length ? (
+            openReminders.map((reminder) => (
+              <Badge key={reminder.id} tone={reminder.type === "SERVICE" ? "warning" : "danger"}>
+                {reminder.type.toLowerCase()} - {format(reminder.dueDate, "MMM d")}
+              </Badge>
+            ))
+          ) : (
+            <Badge tone="success">No active reminders</Badge>
+          )}
+        </div>
+        <VehicleActions vehicleId={vehicle.id} vehicleLabel={`${vehicle.make} ${vehicle.model}`} />
       </CardFooter>
     </Card>
   );

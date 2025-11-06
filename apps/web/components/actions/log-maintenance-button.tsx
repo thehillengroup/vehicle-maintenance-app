@@ -6,6 +6,7 @@ import { FiLoader, FiX } from "react-icons/fi";
 import { GiMechanicGarage } from "react-icons/gi";
 import { Button } from "@repo/ui/button";
 import type { Vehicle } from "@repo/core";
+import { DatePicker } from "../ui/date-picker";
 
 interface LogMaintenanceButtonProps {
   vehicles: Vehicle[];
@@ -113,11 +114,10 @@ export const LogMaintenanceButton = ({ vehicles, onSuccess }: LogMaintenanceButt
                 </label>
                 <label className="flex flex-col gap-1 text-sm text-ink">
                   Service date
-                  <input
-                    required
-                    type="date"
+                  <DatePicker
                     name="serviceDate"
-                    className="rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+                    placeholder="Select date"
+                    required
                   />
                 </label>
                 <label className="flex flex-col gap-1 text-sm text-ink">

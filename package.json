@@ -22,6 +22,7 @@
     "packages/*"
   ],
   "dependencies": {
+    "react-datepicker": "^8.8.0",
     "react-icons": "^5.5.0",
     "react-native-web": "^0.21.0"
   }

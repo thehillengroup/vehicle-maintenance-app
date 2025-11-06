@@ -1,4 +1,4 @@
-import { prisma } from "./client";
+import { prisma } from "./client.ts";
 import { upsertVehicle } from "./index";
 
 const seed = async () => {
@@ -25,6 +25,8 @@ const seed = async () => {
         licensePlate: "7XYZ123",
         registrationState: "CA",
         fuelType: "GAS",
+        purpose: "DAILY_DRIVER",
+        vehicleType: "SEDAN",
         registrationRenewedOn: new Date("2025-02-12"),
         emissionsTestedOn: new Date("2024-12-15"),
         mileage: 18234,
@@ -43,6 +45,8 @@ const seed = async () => {
         licensePlate: "EV12345",
         registrationState: "CA",
         fuelType: "EV",
+        purpose: "COMMUTER",
+        vehicleType: "SEDAN",
         registrationRenewedOn: new Date("2025-06-01"),
         emissionsTestedOn: null,
         mileage: 40211,

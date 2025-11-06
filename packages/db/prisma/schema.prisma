@@ -26,6 +26,22 @@ enum FuelType {
   EV
 }
 
+enum VehicleType {
+  SEDAN
+  COUPE
+  SPORTS_CAR
+  SUV
+  MOTORCYCLE
+  CROSSOVER
+}
+
+enum VehiclePurpose {
+  DAILY_DRIVER
+  COMMUTER
+  WEEKENDER
+  UTILITY_VEHICLE
+}
+
 model User {
   id            String         @id @default(cuid())
   email         String         @unique
@@ -50,12 +66,14 @@ model Vehicle {
   licensePlate          String?
   registrationState     String
   fuelType              FuelType?          @default(GAS)
+  purpose               VehiclePurpose     @default(DAILY_DRIVER)
   registrationRenewedOn DateTime           @default(now())
   emissionsTestedOn     DateTime?
   registrationDueOn     DateTime
   emissionsDueOn        DateTime?
   mileage               Int?
   color                 String?
+  vehicleType           VehicleType     @default(SEDAN)
   createdAt             DateTime           @default(now())
   updatedAt             DateTime           @updatedAt
   owner                 User               @relation(fields: [userId], references: [id])
