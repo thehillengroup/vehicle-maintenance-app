@@ -3,6 +3,7 @@
 import {
   FormEvent,
   KeyboardEvent as ReactKeyboardEvent,
+  useCallback,
   useEffect,
   useId,
   useMemo,
@@ -42,13 +43,21 @@ const DEFAULT_VEHICLE_PURPOSE = VEHICLE_PURPOSE_OPTIONS[0].value;
 
 interface AddVehicleButtonProps {
   onSuccess?: () => void;
+  appearance?: "glass" | "primary";
+  className?: string;
 }
 
-export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
+export const AddVehicleButton = ({
+  onSuccess,
+  appearance = "glass",
+  className = "",
+}: AddVehicleButtonProps) => {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const formRef = useRef<HTMLFormElement | null>(null);
+  const [formValid, setFormValid] = useState(false);
 
   /**
    * --- Make Autocomplete ----------------------------------------------------
@@ -175,6 +184,7 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
       setHighlightedYearIndex(-1);
       setVehicleType(DEFAULT_VEHICLE_TYPE);
       setPurpose(DEFAULT_VEHICLE_PURPOSE);
+      setFormValid(false);
     }
   }, [open]);
 
@@ -649,6 +659,41 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
     yearInputRef.current?.focus();
   };
 
+  const updateFormValidity = useCallback(() => {
+    const form = formRef.current;
+    if (!form) {
+      setFormValid(false);
+      return;
+    }
+
+    if (!form.checkValidity()) {
+      setFormValid(false);
+      return;
+    }
+
+    const normalizedTrim = (selectedTrim || trimQuery || "")
+      .trim()
+      .toLowerCase();
+    const trimMatchesCatalog =
+      Boolean(normalizedTrim) &&
+      trimOptions.some(
+        (option) => option.toLowerCase() === normalizedTrim,
+      );
+
+    const normalizedYear = (selectedYear || yearQuery || "").trim();
+    const yearMatchesCatalog =
+      Boolean(normalizedYear) && yearOptions.includes(normalizedYear);
+
+    setFormValid(trimMatchesCatalog && yearMatchesCatalog);
+  }, [
+    selectedTrim,
+    trimQuery,
+    trimOptions,
+    selectedYear,
+    yearQuery,
+    yearOptions,
+  ]);
+
   useEffect(() => {
     const inputEl = modelInputRef.current;
     if (!selectedMake || !inputEl) {
@@ -682,19 +727,24 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
     filteredTrimOptions.length,
   ]);
 
-  useEffect(() => {
-    const inputEl = yearInputRef.current;
-    if (!inputEl || !selectedTrim) {
-      return;
-    }
+useEffect(() => {
+  const inputEl = yearInputRef.current;
+  if (!inputEl || !selectedTrim) {
+    return;
+  }
     if (document.activeElement !== inputEl) {
       return;
     }
     if (selectedYear) {
       return;
     }
-    setShowYearSuggestions(true);
-  }, [selectedTrim, selectedYear, filteredYearOptions.length]);
+  setShowYearSuggestions(true);
+}, [selectedTrim, selectedYear, filteredYearOptions.length]);
+
+useEffect(() => {
+  if (!open) return;
+  updateFormValidity();
+}, [open, updateFormValidity]);
 
   const handleModelKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
     if (!selectedMake || !filteredModelOptions.length) {
@@ -744,6 +794,7 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
     }
   };
 
+
   /**
    * -------------------------------------------------------------------------
    * Submit handler: make and model values now come from our controlled state.
@@ -753,6 +804,19 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
     event.preventDefault();
     setSubmitting(true);
     setError(null);
+
+    const form = formRef.current;
+    if (!form) {
+      setError("Form not ready. Please close and reopen the modal.");
+      setSubmitting(false);
+      return;
+    }
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      setError("Please fix the highlighted fields before saving.");
+      setSubmitting(false);
+      return;
+    }
 
     const formData = new FormData(event.currentTarget);
     const makeValue =
@@ -808,7 +872,6 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
       registrationState: (formData.get("registrationState") as string)
         ?.toUpperCase()
         .slice(0, 2),
-      nickname: formData.get("nickname") || null,
       mileage: mileageValue,
       fuelType: "GAS",
       purpose: purposeValue,
@@ -851,7 +914,9 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
   return (
     <>
       <Button
-        className="border border-white/40 bg-white/10 text-black transition hover:bg-white/20"
+        className={`${appearance === "primary"
+          ? "bg-brand-600 text-white transition hover:bg-brand-700 focus-visible:ring-2 focus-visible:ring-brand-200"
+          : "border border-white/40 bg-white/10 text-black transition hover:bg-white/20"} ${className}`}
         onClick={() => setOpen(true)}
       >
         <FiPlus className="h-4 w-4" />
@@ -873,7 +938,12 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
                 <FiX className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
-            <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+            <form
+              ref={formRef}
+              className="mt-6 space-y-4"
+              onSubmit={handleSubmit}
+              onInput={updateFormValidity}
+            >
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="flex flex-col gap-1 text-sm text-ink">
                   Make
@@ -926,7 +996,7 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
                               aria-selected={highlightedMakeIndex === index}
                               className={`w-full rounded-md px-3 py-2 text-left text-sm transition ${
                                 highlightedMakeIndex === index
-                                  ? "bg-brand-100 text-brand-900"
+                                  ? "bg-brand-600 text-white"
                                   : "text-ink hover:bg-ink-muted/10"
                               }`}
                               onMouseDown={(event) => event.preventDefault()}
@@ -1013,7 +1083,7 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
                                 onClick={() => selectModel(option)}
                                 className={`w-full rounded-md px-3 py-2 text-left text-sm transition ${
                                   highlightedModelIndex === index
-                                    ? "bg-brand-100 text-brand-900"
+                                    ? "bg-brand-600 text-white"
                                     : "text-ink hover:bg-ink-muted/10"
                                 }`}
                               >
@@ -1100,11 +1170,11 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
                                 aria-selected={highlightedTrimIndex === index}
                                 onMouseDown={(event) => event.preventDefault()}
                                 onClick={() => selectTrim(option)}
-                                className={`w-full rounded-md px-3 py-2 text-left text-sm transition ${
-                                  highlightedTrimIndex === index
-                                    ? "bg-brand-100 text-brand-900"
-                                    : "text-ink hover:bg-ink-muted/10"
-                                }`}
+                              className={`w-full rounded-md px-3 py-2 text-left text-sm transition ${
+                                highlightedTrimIndex === index
+                                  ? "bg-brand-600 text-white"
+                                  : "text-ink hover:bg-ink-muted/10"
+                              }`}
                               >
                                 {option}
                               </button>
@@ -1189,7 +1259,7 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
                                 onClick={() => selectYear(option)}
                                 className={`w-full rounded-md px-3 py-2 text-left text-sm transition ${
                                   highlightedYearIndex === index
-                                    ? "bg-brand-100 text-brand-900"
+                                    ? "bg-brand-600 text-white"
                                     : "text-ink hover:bg-ink-muted/10"
                                 }`}
                               >
@@ -1272,17 +1342,20 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
                   </select>
                 </label>
                 <label className="flex flex-col gap-1 text-sm text-ink">
-                  Registration renewed on
+                  Registration expires on
                   <DatePicker
                     name="registrationRenewedOn"
                     placeholder="Select date"
+                    required
+                    onValueChange={updateFormValidity}
                   />
                 </label>
                 <label className="flex flex-col gap-1 text-sm text-ink">
-                  Emissions tested on
+                  Emission due date
                   <DatePicker
                     name="emissionsTestedOn"
                     placeholder="Select date"
+                    onValueChange={updateFormValidity}
                   />
                 </label>
                 <label className="flex flex-col gap-1 text-sm text-ink">
@@ -1291,13 +1364,6 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
                     name="mileage"
                     type="number"
                     min="0"
-                    className="rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
-                  />
-                </label>
-                <label className="flex flex-col gap-1 text-sm text-ink sm:col-span-2">
-                  Nickname
-                  <input
-                    name="nickname"
                     className="rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
                   />
                 </label>
@@ -1325,7 +1391,7 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
                 <Button
                   type="submit"
                   className="flex min-w-[120px] items-center justify-center gap-2 bg-brand-600 text-white transition hover:bg-brand-700"
-                  disabled={submitting}
+                  disabled={submitting || !formValid}
                 >
                   {submitting ? (
                     <>

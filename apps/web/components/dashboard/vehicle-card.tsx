@@ -1,6 +1,7 @@
 import { differenceInCalendarDays, format } from "date-fns";
 import { Badge } from "@repo/ui/badge";
 import { VehicleActions } from "./vehicle-actions";
+import { VehicleInlineEditor } from "./vehicle-inline-editor";
 import {
   Card,
   CardContent,
@@ -97,6 +98,27 @@ export const VehicleCard = ({ vehicle, compliance, openReminders }: VehicleCardP
           </p>
         </div>
       </CardContent>
+      <VehicleInlineEditor
+        vehicle={{
+          id: vehicle.id,
+          vin: vehicle.vin,
+          make: vehicle.make,
+          model: vehicle.model,
+          year: vehicle.year,
+          trim: vehicle.trim,
+          registrationState: vehicle.registrationState,
+          fuelType: vehicle.fuelType,
+          purpose: vehicle.purpose,
+          vehicleType: vehicle.vehicleType,
+          registrationRenewedOn: vehicle.registrationRenewedOn.toISOString(),
+          emissionsTestedOn: vehicle.emissionsTestedOn
+            ? vehicle.emissionsTestedOn.toISOString()
+            : null,
+          mileage: vehicle.mileage,
+          color: vehicle.color,
+          licensePlate: vehicle.licensePlate,
+        }}
+      />
       <CardFooter className="flex items-center justify-between">
         <div className="flex flex-wrap gap-2">
           {openReminders.length ? (

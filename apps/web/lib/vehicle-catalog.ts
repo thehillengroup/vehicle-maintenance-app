@@ -1,6 +1,7 @@
 type VehicleModel = {
   name: string;
   trims: string[];
+  yearRange?: [number, number];
 };
 
 type VehicleMake = {
@@ -117,7 +118,18 @@ const VEHICLE_CATALOG: VehicleMake[] = [
   {
     make: "Jeep",
     models: [
-      { name: "Cherokee", trims: ["Altitude Lux", "Trailhawk"] },
+      {
+        name: "Cherokee",
+        trims: [
+          "Latitude",
+          "Latitude Lux",
+          "Latitude Plus",
+          "Altitude",
+          "Limited",
+          "Trailhawk",
+          "Overland",
+        ],
+      },
       { name: "Compass", trims: ["Sport", "Latitude", "Latitude Lux", "Limited", "Trailhawk", "High Altitude"] },
       { name: "Gladiator", trims: ["Sport", "Willys", "Overland", "Mojave", "Rubicon"] },
       { name: "Grand Cherokee", trims: ["Laredo", "Altitude", "Limited", "Overland", "Summit", "Summit Reserve", "Trailhawk"] },
@@ -237,6 +249,11 @@ const VEHICLE_CATALOG: VehicleMake[] = [
     make: "Toyota",
     models: [
       { name: "4Runner", trims: ["SR5", "TRD Sport", "TRD Off-Road", "Limited", "TRD Pro"] },
+      {
+        name: "Avalon",
+        trims: ["XLE", "XSE", "Touring", "Limited"],
+        yearRange: [1995, 2022],
+      },
       { name: "bZ4X", trims: ["XLE", "Limited"] },
       { name: "Camry", trims: ["LE", "SE", "SE Nightshade", "XLE", "XSE", "TRD"] },
       { name: "Camry Hybrid", trims: ["LE", "SE", "XLE", "XSE"] },

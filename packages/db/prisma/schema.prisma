@@ -62,7 +62,6 @@ model Vehicle {
   model                 String
   year                  Int
   trim                  String?
-  nickname              String?
   licensePlate          String?
   registrationState     String
   fuelType              FuelType?          @default(GAS)

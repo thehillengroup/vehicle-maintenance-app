@@ -1,4 +1,4 @@
-import { forwardRef, useMemo, useState } from "react";
+import { forwardRef, useEffect, useMemo, useState } from "react";
 import ReactDatePicker from "react-datepicker";
 import { format, parseISO } from "date-fns";
 import clsx from "clsx";
@@ -16,6 +16,7 @@ interface DatePickerProps {
   minDate?: Date;
   maxDate?: Date;
   className?: string;
+  onValueChange?: (value: string | null) => void;
 }
 
 const DateInput = forwardRef<HTMLInputElement, { value?: string; onClick?: () => void; placeholder?: string; disabled?: boolean }>(
@@ -45,6 +46,7 @@ export const DatePicker = ({
   minDate,
   maxDate,
   className,
+  onValueChange,
 }: DatePickerProps) => {
   const initialDate = useMemo(() => {
     if (!defaultValue) return null;
@@ -56,6 +58,12 @@ export const DatePicker = ({
   }, [defaultValue]);
 
   const [selected, setSelected] = useState<Date | null>(initialDate);
+
+  useEffect(() => {
+    if (typeof onValueChange === "function") {
+      onValueChange(selected ? format(selected, "yyyy-MM-dd") : null);
+    }
+  }, [selected, onValueChange]);
 
   return (
     <div className={clsx("relative", className)}>
@@ -70,6 +78,11 @@ export const DatePicker = ({
         maxDate={maxDate}
         calendarClassName="vm-datepicker"
         popperClassName="vm-datepicker-popper"
+        showMonthDropdown
+        showYearDropdown
+        dropdownMode="select"
+        scrollableYearDropdown
+        yearDropdownItemNumber={20}
         dayClassName={(date) =>
           clsx(
             "vm-datepicker-day",

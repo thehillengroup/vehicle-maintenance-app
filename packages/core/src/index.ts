@@ -82,7 +82,6 @@ export const vehicleSchema = z.object({
   model: z.string().min(1),
   year: z.number().int().gte(1980).lte(new Date().getFullYear() + 1),
   trim: z.string().nullable(),
-  nickname: z.string().nullable(),
   licensePlate: z.string().nullable(),
   registrationState: z.string().length(2),
   fuelType: fuelTypeSchema.optional().default("GAS"),

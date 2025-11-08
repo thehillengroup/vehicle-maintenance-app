@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { differenceInCalendarDays, formatDistanceToNow } from "date-fns";
 import { AppShell } from "../components/layout/app-shell";
 import { VehicleCard } from "../components/dashboard/vehicle-card";
@@ -133,7 +135,7 @@ export default async function Page() {
                 Start by adding your first vehicle to automatically track registration and emissions milestones.
               </p>
               <div className="mt-6 flex justify-center gap-3">
-                <Button>Add vehicle</Button>
+                <AddVehicleButton appearance="primary" />
                 <Button variant="ghost">Import records</Button>
               </div>
             </div>

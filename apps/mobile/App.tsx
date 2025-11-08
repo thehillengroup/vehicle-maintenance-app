@@ -74,7 +74,6 @@ const FALLBACK_VEHICLES: Array<Partial<Vehicle> & { id: string }> = [
     model: "Civic",
     year: 2021,
     trim: "EX",
-    nickname: "Daily Driver",
     licensePlate: "7XYZ123",
     registrationState: "CA",
     fuelType: "GAS",
@@ -95,7 +94,6 @@ const FALLBACK_VEHICLES: Array<Partial<Vehicle> & { id: string }> = [
     model: "Model 3",
     year: 2020,
     trim: "Long Range",
-    nickname: "Commuter",
     licensePlate: "EV12345",
     registrationState: "CA",
     fuelType: "EV",
@@ -172,7 +170,6 @@ export default function App() {
               mileage: item.mileage ?? null,
               color: item.color ?? null,
               trim: item.trim ?? null,
-              nickname: item.nickname ?? null,
               licensePlate: item.licensePlate ?? null,
             }),
           );
@@ -209,7 +206,6 @@ export default function App() {
             mileage: item.mileage ?? null,
             color: item.color ?? null,
             trim: item.trim ?? null,
-            nickname: item.nickname ?? null,
             licensePlate: item.licensePlate ?? null,
           }),
         );
@@ -350,13 +346,6 @@ export default function App() {
                           VIN {vehicle.vin}
                         </Text>
                       </View>
-                      {vehicle.nickname ? (
-                        <View style={[styles.badge, styles.badgeAccent]}>
-                          <Text style={styles.badgeText}>
-                            {vehicle.nickname}
-                          </Text>
-                        </View>
-                      ) : null}
                     </View>
                     <View style={styles.vehicleMeta}>
                       <View style={styles.metaColumn}>
