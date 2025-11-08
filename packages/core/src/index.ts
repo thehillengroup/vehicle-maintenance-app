@@ -165,6 +165,13 @@ export const stateComplianceRules: Record<string, ComplianceRule> = {
   },
 };
 
+const defaultComplianceRule: ComplianceRule = {
+  registrationIntervalMonths: 12,
+  emissionsIntervalMonths: 24,
+  emissionsStartAgeYears: 4,
+  emissionsExemptFuelTypes: [],
+};
+
 export interface ComplianceContext {
   state: string;
   modelYear: number;
@@ -184,10 +191,7 @@ export const computeComplianceProjection = (
   input: ComplianceContext,
 ): ComplianceProjection => {
   const now = input.currentDate ?? new Date();
-  const rule = stateComplianceRules[input.state];
-  if (!rule) {
-    throw new Error(`Missing compliance rule for state ${input.state}`);
-  }
+  const rule = stateComplianceRules[input.state] ?? defaultComplianceRule;
 
   const registrationDue = addMonthsClamped(
     input.lastRegistrationOn,

@@ -46,6 +46,38 @@ turbo dev --filter=web
 turbo dev --filter=mobile
 ```
 
+## Local Deployment Checklist (Windows PowerShell)
+
+1. Allow scripts for the current session:
+   ```powershell
+   Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+   ```
+2. Change to the repo root:
+   ```powershell
+   cd C:\Users\<your-user>\dev\vehicle-maintenance
+   ```
+3. Install dependencies:
+   ```powershell
+   npm install
+   ```
+4. Generate the Prisma client from the shared schema:
+   ```powershell
+   npx prisma generate --schema packages/db/prisma/schema.prisma
+   ```
+5. Seed the demo vehicles (runs the TypeScript seed directly so no build is required):
+   ```powershell
+   npx tsx packages/db/src/seed.ts
+   ```
+6. If another `node` process already occupies port 3000, stop it:
+   ```powershell
+   Get-Process node -ErrorAction SilentlyContinue | Stop-Process -ErrorAction SilentlyContinue
+   ```
+7. Launch the web app via Turbo (from the repo root):
+   ```powershell
+   npx turbo dev --filter=web
+   ```
+8. Open `http://localhost:3000` in your browser. You should see five vehicles (Honda Civic, Tesla Model 3, Jeep Grand Cherokee, BMW X5, Subaru Outback) sorted by year.
+
 Create a `.env` file at the repo root with:
 
 ```

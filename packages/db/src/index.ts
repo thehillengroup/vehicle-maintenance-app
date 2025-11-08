@@ -38,9 +38,10 @@ const vehicleSelect = {
 export const listVehicles = async (userId: string): Promise<Vehicle[]> => {
   const vehicles = await prisma.vehicle.findMany({
     where: { userId },
-    orderBy: {
-      updatedAt: "desc",
-    },
+    orderBy: [
+      { year: "desc" },
+      { updatedAt: "desc" },
+    ],
     select: vehicleSelect,
   });
 

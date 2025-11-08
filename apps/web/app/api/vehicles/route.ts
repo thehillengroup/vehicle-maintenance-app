@@ -38,7 +38,20 @@ export async function POST(request: Request) {
     );
   }
 
-  const vehicle = await upsertVehicle({ userId: user.id, payload: parsed.data });
+  try {
+    const vehicle = await upsertVehicle({
+      userId: user.id,
+      payload: parsed.data,
+    });
 
-  return withCors(NextResponse.json({ data: vehicle }, { status: 201 }));
+    return withCors(NextResponse.json({ data: vehicle }, { status: 201 }));
+  } catch (error) {
+    console.error("Vehicle create failed", error);
+    return withCors(
+      NextResponse.json(
+        { error: "Unable to save vehicle right now." },
+        { status: 500 },
+      ),
+    );
+  }
 }

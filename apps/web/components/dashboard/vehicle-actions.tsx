@@ -18,6 +18,11 @@ export const VehicleActions = ({ vehicleId, vehicleLabel }: VehicleActionsProps)
   const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
+    // helpful while wiring up delete flow
+    console.debug("[VehicleActions] mounted for", vehicleId);
+  }, [vehicleId]);
+
+  useEffect(() => {
     if (!showConfirm) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -29,6 +34,11 @@ export const VehicleActions = ({ vehicleId, vehicleLabel }: VehicleActionsProps)
   }, [showConfirm]);
 
   const handleDelete = async () => {
+    if (!vehicleId) {
+      console.error("Missing vehicle id for delete");
+      return;
+    }
+
     setIsDeleting(true);
     try {
       const response = await fetch(`/api/vehicles/${vehicleId}`, {

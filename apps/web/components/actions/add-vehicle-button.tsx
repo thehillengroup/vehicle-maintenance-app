@@ -767,6 +767,11 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
       yearValue && yearOptions.includes(yearValue) ? yearValue : "";
     const vehicleTypeValue = vehicleType;
     const purposeValue = purpose;
+    const mileageInput = (formData.get("mileage") as string) ?? "";
+    const mileageSanitized = mileageInput.replace(/[^\d]/g, "");
+    const mileageValue = mileageSanitized ? Number(mileageSanitized) : null;
+    const colorValue =
+      (formData.get("color") as string)?.trim() || null;
 
     if (!trimValue) {
       setError("Please choose a trim before selecting a year.");
@@ -804,15 +809,14 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
         ?.toUpperCase()
         .slice(0, 2),
       nickname: formData.get("nickname") || null,
-      mileage: formData.get("mileage")
-        ? Number(formData.get("mileage"))
-        : null,
+      mileage: mileageValue,
       fuelType: "GAS",
       purpose: purposeValue,
       vehicleType: vehicleTypeValue,
+      color: colorValue,
       registrationRenewedOn: formData.get("registrationRenewedOn") || null,
       emissionsTestedOn: formData.get("emissionsTestedOn") || null,
-      licensePlate: formData.get("licensePlate") || null,
+      licensePlate: (formData.get("licensePlate") as string)?.toUpperCase() || null,
     };
 
     try {
@@ -824,10 +828,13 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
 
       if (!response.ok) {
         const body = await response.json().catch(() => null);
-        throw new Error(
-          body?.error ??
-            "Unable to save vehicle right now. Please try again shortly.",
-        );
+        console.error("Vehicle save failed", body);
+        const message =
+          body?.details?.formErrors?.length
+            ? body.details.formErrors[0]
+            : body?.error ??
+              "Unable to save vehicle right now. Please try again shortly.";
+        throw new Error(message);
       }
 
       setOpen(false);
@@ -1227,6 +1234,9 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
                   License plate
                   <input
                     name="licensePlate"
+                    onChange={(event) =>
+                      (event.currentTarget.value = event.currentTarget.value.toUpperCase())
+                    }
                     className="rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
                   />
                 </label>
@@ -1288,6 +1298,13 @@ export const AddVehicleButton = ({ onSuccess }: AddVehicleButtonProps) => {
                   Nickname
                   <input
                     name="nickname"
+                    className="rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm text-ink">
+                  Color
+                  <input
+                    name="color"
                     className="rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
                   />
                 </label>

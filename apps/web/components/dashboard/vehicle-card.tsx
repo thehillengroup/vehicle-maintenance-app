@@ -53,11 +53,9 @@ export const VehicleCard = ({ vehicle, compliance, openReminders }: VehicleCardP
             {vehicle.year} {vehicle.make} {vehicle.model}
             {vehicle.trim ? <span className="text-sm text-ink-subtle"> - {vehicle.trim}</span> : null}
           </span>
-          {vehicle.nickname ? (
-            <Badge tone="info" className="text-xs uppercase tracking-wide">
-              {vehicle.nickname}
-            </Badge>
-          ) : null}
+          <Badge tone="info" className="text-xs uppercase tracking-wide">
+            {vehicle.purpose.replaceAll("_", " ")}
+          </Badge>
         </CardTitle>
         <CardDescription className="flex flex-wrap items-center gap-3 text-xs uppercase tracking-wide text-ink-muted">
           <span className="font-semibold text-ink">VIN:</span>
