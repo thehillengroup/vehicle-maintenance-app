@@ -28,6 +28,7 @@ interface VehicleCardProps {
     dueDate: Date;
   }>;
   onDeleted?: () => void;
+  onUpdated?: (vehicle: Vehicle) => void;
 }
 
 const vehicleTypeLabel: Record<Vehicle["vehicleType"], string> = {
@@ -46,7 +47,7 @@ const describeWindow = (days: number) => {
   return `Due in ${days} days`;
 };
 
-export const VehicleCard = ({ vehicle, compliance, openReminders, onDeleted }: VehicleCardProps) => {
+export const VehicleCard = ({ vehicle, compliance, openReminders, onDeleted, onUpdated }: VehicleCardProps) => {
   return (
     <Card className="shadow-card">
       <CardHeader>
@@ -104,29 +105,7 @@ export const VehicleCard = ({ vehicle, compliance, openReminders, onDeleted }: V
           </p>
         </div>
       </CardContent>
-      <VehicleInlineEditor
-        vehicle={{
-          id: vehicle.id,
-          vin: vehicle.vin,
-          make: vehicle.make,
-          model: vehicle.model,
-          year: vehicle.year,
-          trim: vehicle.trim,
-          registrationState: vehicle.registrationState,
-          fuelType: vehicle.fuelType,
-          purpose: vehicle.purpose,
-          vehicleType: vehicle.vehicleType,
-          registrationRenewedOn: vehicle.registrationRenewedOn
-            ? new Date(vehicle.registrationRenewedOn).toISOString()
-            : null,
-          emissionsTestedOn: vehicle.emissionsTestedOn
-            ? new Date(vehicle.emissionsTestedOn).toISOString()
-            : null,
-          mileage: vehicle.mileage,
-          color: vehicle.color,
-          licensePlate: vehicle.licensePlate,
-        }}
-      />
+      <VehicleInlineEditor vehicle={vehicle} onUpdated={onUpdated} />
       <CardFooter className="flex items-center justify-between">
         <div className="flex flex-wrap gap-2">
           {openReminders.length ? (
@@ -148,4 +127,3 @@ export const VehicleCard = ({ vehicle, compliance, openReminders, onDeleted }: V
     </Card>
   );
 };
-

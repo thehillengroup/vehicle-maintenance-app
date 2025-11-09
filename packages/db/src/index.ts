@@ -1,7 +1,6 @@
 import { Prisma } from "@prisma/client";
 import {
   CreateReminderPayload,
-  computeComplianceProjection,
   createReminderPayloadSchema,
   reminderSchema,
   vehicleSchema,
@@ -10,7 +9,7 @@ import {
 } from "@repo/core";
 import type { Reminder, Vehicle } from "@repo/core";
 import { addDays, isBefore } from "date-fns";
-import { prisma } from "./client.ts";
+import { prisma } from "./client";
 
 const vehicleSelect = {
   id: true,
@@ -40,6 +39,8 @@ export const listVehicles = async (userId: string): Promise<Vehicle[]> => {
     where: { userId },
     orderBy: [
       { year: "desc" },
+      { make: "asc" },
+      { model: "asc" },
       { updatedAt: "desc" },
     ],
     select: vehicleSelect,
@@ -79,20 +80,6 @@ export const upsertVehicle = async ({
 }: UpsertVehicleOptions): Promise<Vehicle> => {
   const data = vehicleUpsertSchema.parse(payload);
 
-  const compliance = data.registrationRenewedOn
-    ? computeComplianceProjection({
-        state: data.registrationState,
-        modelYear: data.year,
-        fuelType: data.fuelType ?? "GAS",
-        lastRegistrationOn: data.registrationRenewedOn,
-        lastEmissionsOn: data.emissionsTestedOn ?? null,
-      })
-    : {
-        registrationDueOn: null,
-        emissionsDueOn: null,
-        requiresEmissions: false,
-      };
-
   const baseData = {
     userId,
     vin: data.vin,
@@ -107,8 +94,8 @@ export const upsertVehicle = async ({
     vehicleType: data.vehicleType,
     registrationRenewedOn: data.registrationRenewedOn,
     emissionsTestedOn: data.emissionsTestedOn,
-    registrationDueOn: compliance.registrationDueOn,
-    emissionsDueOn: compliance.emissionsDueOn,
+    registrationDueOn: data.registrationRenewedOn,
+    emissionsDueOn: data.emissionsTestedOn,
     mileage: data.mileage,
     color: data.color,
   };

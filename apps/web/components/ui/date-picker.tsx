@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useMemo, useState } from "react";
+import { forwardRef, useEffect, useMemo, useRef, useState } from "react";
 import ReactDatePicker from "react-datepicker";
 import { format, parseISO } from "date-fns";
 import clsx from "clsx";
@@ -58,18 +58,32 @@ export const DatePicker = ({
   }, [defaultValue]);
 
   const [selected, setSelected] = useState<Date | null>(initialDate);
+  const skipNotifyRef = useRef(true);
+  const prevValueRef = useRef<string | null>(initialDate ? format(initialDate, "yyyy-MM-dd") : null);
 
   useEffect(() => {
-    if (typeof onValueChange === "function") {
-      onValueChange(selected ? format(selected, "yyyy-MM-dd") : null);
+    const nextValue = initialDate ? format(initialDate, "yyyy-MM-dd") : null;
+    if (nextValue === prevValueRef.current) {
+      return;
     }
-  }, [selected, onValueChange]);
+    prevValueRef.current = nextValue;
+    skipNotifyRef.current = true;
+    setSelected(initialDate);
+  }, [initialDate]);
+
+  const handleChange = (date: Date | null) => {
+    skipNotifyRef.current = false;
+    setSelected(date);
+    if (typeof onValueChange === "function") {
+      onValueChange(date ? format(date, "yyyy-MM-dd") : null);
+    }
+  };
 
   return (
     <div className={clsx("relative", className)}>
       <ReactDatePicker
         selected={selected}
-        onChange={(date) => setSelected(date)}
+        onChange={handleChange}
         customInput={<DateInput placeholder={placeholder} disabled={disabled} />}
         dateFormat="yyyy-MM-dd"
         placeholderText={placeholder}

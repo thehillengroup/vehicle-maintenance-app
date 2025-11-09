@@ -46,6 +46,22 @@ export function useDashboardData(initialVehicles: Vehicle[], initialReminders: R
     );
   };
 
+  const updateVehicleOptimistic = (vehicle: Vehicle) => {
+    mutateVehicles(
+      (current) => {
+        const currentData = current?.data ?? [];
+        const index = currentData.findIndex((existing) => existing.id === vehicle.id);
+        if (index === -1) {
+          return current;
+        }
+        const next = [...currentData];
+        next[index] = vehicle;
+        return { data: next };
+      },
+      false,
+    );
+  };
+
   const removeVehicleOptimistic = (vehicleId: string) => {
     mutateVehicles(
       (current) => ({
@@ -65,5 +81,6 @@ export function useDashboardData(initialVehicles: Vehicle[], initialReminders: R
     refreshAll,
     addVehicleOptimistic,
     removeVehicleOptimistic,
+    updateVehicleOptimistic,
   };
 }

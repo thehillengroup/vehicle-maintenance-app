@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { differenceInCalendarDays, formatDistanceToNow } from "date-fns";
 import type { Reminder, Vehicle } from "@repo/core";
 import { StatCard } from "./stat-card";
@@ -22,8 +23,29 @@ export function DashboardClient({ initialVehicles, initialReminders }: Dashboard
     refreshAll,
     addVehicleOptimistic,
     removeVehicleOptimistic,
+    updateVehicleOptimistic,
   } = useDashboardData(initialVehicles, initialReminders);
   const now = new Date();
+
+  const sortedVehicles = useMemo(() => {
+    return [...vehicles].sort((a, b) => {
+      if (a.year !== b.year) {
+        return b.year - a.year;
+      }
+
+      const makeComparison = a.make.localeCompare(b.make);
+      if (makeComparison !== 0) {
+        return makeComparison;
+      }
+
+      const modelComparison = a.model.localeCompare(b.model);
+      if (modelComparison !== 0) {
+        return modelComparison;
+      }
+
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
+  }, [vehicles]);
 
   const handleVehicleAdded = (vehicle: Vehicle) => {
     addVehicleOptimistic(vehicle);
@@ -33,6 +55,10 @@ export function DashboardClient({ initialVehicles, initialReminders }: Dashboard
   const handleVehicleDeleted = (vehicleId: string) => {
     removeVehicleOptimistic(vehicleId);
     refreshAll();
+  };
+
+  const handleVehicleUpdated = (vehicle: Vehicle) => {
+    updateVehicleOptimistic(vehicle);
   };
 
   const remindersByVehicle = reminders.reduce<Record<string, Reminder[]>>((acc, reminder) => {
@@ -106,7 +132,7 @@ export function DashboardClient({ initialVehicles, initialReminders }: Dashboard
 
       <section className="grid gap-10 lg:grid-cols-[2fr,1fr]">
         <div className="space-y-6">
-          {vehicles.map((vehicle) => {
+          {sortedVehicles.map((vehicle) => {
             const registrationDueInDays = vehicle.registrationDueOn
               ? differenceInCalendarDays(vehicle.registrationDueOn, now)
               : null;
@@ -126,6 +152,7 @@ export function DashboardClient({ initialVehicles, initialReminders }: Dashboard
                 }}
                 openReminders={remindersByVehicle[vehicle.id] ?? []}
                 onDeleted={() => handleVehicleDeleted(vehicle.id)}
+                onUpdated={handleVehicleUpdated}
               />
             );
           })}

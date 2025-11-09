@@ -1,59 +1,47 @@
 "use client";
 
-import { FormEvent, useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { FormEvent, useEffect, useMemo, useState, useTransition } from "react";
 import { FiEdit3, FiSave, FiX } from "react-icons/fi";
 import { Vehicle } from "@repo/core";
 import { Button } from "@repo/ui/button";
+import { DatePicker } from "../ui/date-picker";
 
-interface EditableVehiclePayload {
-  id: string;
-  vin: string;
-  make: string;
-  model: string;
-  year: number;
-  trim: string | null;
-  registrationState: string;
-  fuelType: Vehicle["fuelType"];
-  purpose: Vehicle["purpose"];
-  vehicleType: Vehicle["vehicleType"];
-  registrationRenewedOn: string | null;
-  emissionsTestedOn: string | null;
-  mileage: number | null;
-  color: string | null;
-  licensePlate: string | null;
-}
-
-const formatISODate = (value: string | null) => {
+const toDateInputValue = (value: Date | string | null) => {
   if (!value) return "";
-  return value.slice(0, 10);
+  const isoString = typeof value === "string" ? value : value.toISOString();
+  return isoString.slice(0, 10);
 };
 
-export function VehicleInlineEditor({ vehicle }: { vehicle: EditableVehiclePayload }) {
-  const router = useRouter();
+const buildFormState = (source: Vehicle) => ({
+  licensePlate: source.licensePlate ?? "",
+  mileage: source.mileage?.toString() ?? "",
+  registrationRenewedOn: toDateInputValue(source.registrationRenewedOn),
+  emissionsTestedOn: toDateInputValue(source.emissionsTestedOn),
+});
+
+interface VehicleInlineEditorProps {
+  vehicle: Vehicle;
+  onUpdated?: (vehicle: Vehicle) => void;
+}
+
+export function VehicleInlineEditor({ vehicle, onUpdated }: VehicleInlineEditorProps) {
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const [formState, setFormState] = useState({
-    licensePlate: vehicle.licensePlate ?? "",
-    mileage: vehicle.mileage?.toString() ?? "",
-    registrationRenewedOn: formatISODate(vehicle.registrationRenewedOn),
-    emissionsTestedOn: formatISODate(vehicle.emissionsTestedOn),
-  });
+  const [formState, setFormState] = useState(() => buildFormState(vehicle));
+
+  useEffect(() => {
+    setFormState(buildFormState(vehicle));
+  }, [vehicle]);
 
   const disableSave = useMemo(() => {
     return formState.mileage !== "" && Number.isNaN(Number(formState.mileage));
   }, [formState.mileage]);
 
-  const resetForm = () => {
-    setFormState({
-      licensePlate: vehicle.licensePlate ?? "",
-      mileage: vehicle.mileage?.toString() ?? "",
-      registrationRenewedOn: formatISODate(vehicle.registrationRenewedOn),
-      emissionsTestedOn: formatISODate(vehicle.emissionsTestedOn),
-    });
+  const resetForm = (source: Vehicle = vehicle) => {
+    setFormState(buildFormState(source));
     setError(null);
     setSuccess(null);
   };
@@ -107,9 +95,24 @@ export function VehicleInlineEditor({ vehicle }: { vehicle: EditableVehiclePaylo
           );
         }
 
+        const data = await response.json().catch(() => null);
+        const updatedVehicle = data?.data as Vehicle | undefined;
+        const fallbackVehicle: Vehicle = {
+          ...vehicle,
+          licensePlate: payload.licensePlate,
+          mileage: payload.mileage,
+          registrationRenewedOn: registrationRenewedOnValue ? new Date(registrationRenewedOnValue) : null,
+          emissionsTestedOn: emissionsTestedOnValue ? new Date(emissionsTestedOnValue) : null,
+          registrationDueOn: registrationRenewedOnValue ? new Date(registrationRenewedOnValue) : null,
+          emissionsDueOn: emissionsTestedOnValue ? new Date(emissionsTestedOnValue) : null,
+          updatedAt: new Date(),
+        };
+
         setSuccess("Vehicle updated");
         setEditing(false);
-        router.refresh();
+        const resolvedVehicle = updatedVehicle ?? fallbackVehicle;
+        onUpdated?.(resolvedVehicle);
+        resetForm(resolvedVehicle);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Unexpected error");
       }
@@ -174,29 +177,29 @@ export function VehicleInlineEditor({ vehicle }: { vehicle: EditableVehiclePaylo
             </label>
             <label className="text-xs uppercase tracking-wide text-ink-subtle">
               Registration expires on
-              <input
-                type="date"
-                className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm text-ink outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
-                value={formState.registrationRenewedOn}
-                onChange={(event) =>
+              <DatePicker
+                name="registrationRenewedOn"
+                required
+                placeholder="Select date"
+                defaultValue={formState.registrationRenewedOn || null}
+                onValueChange={(value) =>
                   setFormState((prev) => ({
                     ...prev,
-                    registrationRenewedOn: event.target.value,
+                    registrationRenewedOn: value ?? "",
                   }))
                 }
-                required
               />
             </label>
             <label className="text-xs uppercase tracking-wide text-ink-subtle sm:col-span-2">
               Emission due date
-              <input
-                type="date"
-                className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm text-ink outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
-                value={formState.emissionsTestedOn}
-                onChange={(event) =>
+              <DatePicker
+                name="emissionsTestedOn"
+                placeholder="Select date"
+                defaultValue={formState.emissionsTestedOn || null}
+                onValueChange={(value) =>
                   setFormState((prev) => ({
                     ...prev,
-                    emissionsTestedOn: event.target.value,
+                    emissionsTestedOn: value ?? "",
                   }))
                 }
               />

@@ -1,4 +1,4 @@
-import { prisma } from "./client.ts";
+import { prisma } from "./client";
 import { upsertVehicle } from "./index";
 
 const seed = async () => {
