@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getDemoUser } from "../../../lib/demo-user";
-import { listVehicles, upsertVehicle } from "@repo/db";
+import { DuplicateVehicleVinError, listVehicles, upsertVehicle } from "@repo/db";
 import { vehicleUpsertSchema } from "@repo/core";
 
 const corsHeaders = {
@@ -44,8 +45,18 @@ export async function POST(request: Request) {
       payload: parsed.data,
     });
 
+    revalidatePath("/");
+
     return withCors(NextResponse.json({ data: vehicle }, { status: 201 }));
   } catch (error) {
+    if (error instanceof DuplicateVehicleVinError) {
+      return withCors(
+        NextResponse.json(
+          { error: error.message },
+          { status: 409 },
+        ),
+      );
+    }
     console.error("Vehicle create failed", error);
     return withCors(
       NextResponse.json(

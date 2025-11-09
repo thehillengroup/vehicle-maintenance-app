@@ -61,7 +61,7 @@ const fonts = {
 
 interface VehicleSummary {
   vehicle: Vehicle;
-  registrationDueIn: number;
+  registrationDueIn: number | null;
   emissionsDueIn: number | null;
 }
 
@@ -163,8 +163,8 @@ export default function App() {
           FALLBACK_VEHICLES.map((item) =>
             vehicleSchema.parse({
               ...item,
-              registrationRenewedOn: item.registrationRenewedOn ?? new Date(),
-              registrationDueOn: item.registrationDueOn ?? new Date(),
+              registrationRenewedOn: item.registrationRenewedOn ?? null,
+              registrationDueOn: item.registrationDueOn ?? null,
               emissionsTestedOn: item.emissionsTestedOn ?? null,
               emissionsDueOn: item.emissionsDueOn ?? null,
               mileage: item.mileage ?? null,
@@ -183,10 +183,9 @@ export default function App() {
           setVehicleSummaries(
             parsedVehicles.map((vehicle) => ({
               vehicle,
-              registrationDueIn: differenceInCalendarDays(
-                vehicle.registrationDueOn,
-                new Date(),
-              ),
+              registrationDueIn: vehicle.registrationDueOn
+                ? differenceInCalendarDays(vehicle.registrationDueOn, new Date())
+                : null,
               emissionsDueIn: vehicle.emissionsDueOn
                 ? differenceInCalendarDays(vehicle.emissionsDueOn, new Date())
                 : null,
@@ -199,8 +198,8 @@ export default function App() {
         const parsedVehicles = FALLBACK_VEHICLES.map((item) =>
           vehicleSchema.parse({
             ...item,
-            registrationRenewedOn: item.registrationRenewedOn ?? new Date(),
-            registrationDueOn: item.registrationDueOn ?? new Date(),
+            registrationRenewedOn: item.registrationRenewedOn ?? null,
+            registrationDueOn: item.registrationDueOn ?? null,
             emissionsTestedOn: item.emissionsTestedOn ?? null,
             emissionsDueOn: item.emissionsDueOn ?? null,
             mileage: item.mileage ?? null,
@@ -213,10 +212,9 @@ export default function App() {
           setVehicleSummaries(
             parsedVehicles.map((vehicle) => ({
               vehicle,
-              registrationDueIn: differenceInCalendarDays(
-                vehicle.registrationDueOn,
-                new Date(),
-              ),
+              registrationDueIn: vehicle.registrationDueOn
+                ? differenceInCalendarDays(vehicle.registrationDueOn, new Date())
+                : null,
               emissionsDueIn: vehicle.emissionsDueOn
                 ? differenceInCalendarDays(vehicle.emissionsDueOn, new Date())
                 : null,
@@ -239,7 +237,9 @@ export default function App() {
 
   const stats = useMemo(() => {
     const overdueRegistrations = vehicleSummaries.filter(
-      (summary) => summary.registrationDueIn < 0,
+      (summary) =>
+        typeof summary.registrationDueIn === "number" &&
+        summary.registrationDueIn < 0,
     ).length;
     const overdueEmissions = vehicleSummaries.filter(
       (summary) =>
@@ -350,12 +350,20 @@ export default function App() {
                     <View style={styles.vehicleMeta}>
                       <View style={styles.metaColumn}>
                         <Text style={styles.metaLabel}>Registration</Text>
-                        <Text style={styles.metaValue}>
-                          Due {format(vehicle.registrationDueOn, "MMM d, yyyy")}
-                        </Text>
-                        <Text style={styles.metaHelper}>
-                          {describeWindow(registrationDueIn)}
-                        </Text>
+                        {vehicle.registrationDueOn ? (
+                          <>
+                            <Text style={styles.metaValue}>
+                              Due {format(vehicle.registrationDueOn, "MMM d, yyyy")}
+                            </Text>
+                            <Text style={styles.metaHelper}>
+                              {registrationDueIn != null
+                                ? describeWindow(registrationDueIn)
+                                : "Date pending"}
+                            </Text>
+                          </>
+                        ) : (
+                          <Text style={styles.metaHelper}>Not set</Text>
+                        )}
                       </View>
                       <View style={styles.metaColumn}>
                         <Text style={styles.metaLabel}>Emissions</Text>
@@ -375,7 +383,13 @@ export default function App() {
                       </View>
                     </View>
                     <View style={styles.badgeRow}>
-                      <Badge tone={registrationDueIn < 0 ? "danger" : "info"}>
+                      <Badge
+                        tone={
+                          typeof registrationDueIn === "number" && registrationDueIn < 0
+                            ? "danger"
+                            : "info"
+                        }
+                      >
                         {vehicle.registrationState} • Plate{" "}
                         {vehicle.licensePlate ?? "—"}
                       </Badge>

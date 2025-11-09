@@ -1,15 +1,10 @@
 export const dynamic = "force-dynamic";
 
-import { differenceInCalendarDays, formatDistanceToNow } from "date-fns";
 import { AppShell } from "../components/layout/app-shell";
-import { VehicleCard } from "../components/dashboard/vehicle-card";
-import { ReminderTimeline } from "../components/dashboard/reminder-timeline";
-import { StatCard } from "../components/dashboard/stat-card";
-import { Button } from "@repo/ui/button";
 import { getDemoUser } from "../lib/demo-user";
 import { getDueReminders, listVehicles } from "@repo/db";
-import { AddVehicleButton } from "../components/actions/add-vehicle-button";
-import { LogMaintenanceButton } from "../components/actions/log-maintenance-button";
+import { DashboardClient } from "../components/dashboard/dashboard-client";
+import { DashboardActions } from "../components/dashboard/dashboard-actions";
 
 export default async function Page() {
   const user = await getDemoUser();
@@ -18,141 +13,9 @@ export default async function Page() {
     getDueReminders({ userId: user.id, withinDays: 90 }),
   ]);
 
-  const now = new Date();
-
-  const remindersByVehicle = reminders.reduce<Record<string, typeof reminders>>(
-    (acc, reminder) => {
-      const vehicleReminders = acc[reminder.vehicleId] ?? [];
-      vehicleReminders.push(reminder);
-      acc[reminder.vehicleId] = vehicleReminders;
-      return acc;
-    },
-    {},
-  );
-
-  const registrationOverdue = vehicles.filter(
-    (vehicle) => differenceInCalendarDays(vehicle.registrationDueOn, now) < 0,
-  );
-
-  const emissionsOverdue = vehicles.filter(
-    (vehicle) =>
-      vehicle.emissionsDueOn && differenceInCalendarDays(vehicle.emissionsDueOn, now) < 0,
-  );
-
-  const totalMileage = vehicles.reduce((sum, vehicle) => sum + (vehicle.mileage ?? 0), 0);
-
-  const upcomingReminderCount = reminders.length;
-
-  const latestVehicleUpdatedAt = vehicles.reduce<Date | null>((latest, vehicle) => {
-    const updated = new Date(vehicle.updatedAt);
-    if (!latest || updated > latest) {
-      return updated;
-    }
-    return latest;
-  }, null);
-
-  const stats = [
-    {
-      title: "Vehicles managed",
-      value: String(vehicles.length),
-      helper: latestVehicleUpdatedAt
-        ? `Last updated ${formatDistanceToNow(latestVehicleUpdatedAt)} ago`
-        : "Add your first vehicle",
-      tone: "default" as const,
-    },
-    {
-      title: "Registration overdue",
-      value: String(registrationOverdue.length),
-      helper: registrationOverdue.length ? "Needs attention this week" : "All registrations current",
-      tone: "danger" as const,
-    },
-    {
-      title: "Emissions overdue",
-      value: String(emissionsOverdue.length),
-      helper: emissionsOverdue.length ? "Schedule tests soon" : "All emissions checks up to date",
-      tone: "warning" as const,
-    },
-    {
-      title: "Tracked miles",
-      value: totalMileage.toLocaleString(),
-      helper: "Total mileage across your garage",
-      tone: "success" as const,
-    },
-  ];
-
   return (
-    <AppShell
-      actions={
-        <div className="flex items-center gap-2">
-          <AddVehicleButton />
-          <LogMaintenanceButton vehicles={vehicles} />
-        </div>
-      }
-    >
-      <section>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {stats.map((stat) => (
-            <StatCard
-              key={stat.title}
-              title={stat.title}
-              value={stat.value}
-              helper={stat.helper}
-              tone={stat.tone}
-            />
-          ))}
-        </div>
-      </section>
-
-      <section className="grid gap-10 lg:grid-cols-[2fr,1fr]">
-        <div className="space-y-6">
-          {vehicles.map((vehicle) => {
-            const registrationDueInDays = differenceInCalendarDays(
-              vehicle.registrationDueOn,
-              now,
-            );
-            const emissionsDueInDays = vehicle.emissionsDueOn
-              ? differenceInCalendarDays(vehicle.emissionsDueOn, now)
-              : null;
-
-            return (
-              <VehicleCard
-                key={vehicle.id}
-                vehicle={vehicle}
-                compliance={{
-                  registrationDueOn: vehicle.registrationDueOn,
-                  registrationDueInDays,
-                  emissionsDueOn: vehicle.emissionsDueOn ?? null,
-                  emissionsDueInDays,
-                }}
-                openReminders={remindersByVehicle[vehicle.id] ?? []}
-              />
-            );
-          })}
-          {vehicles.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border bg-surface-raised p-8 text-center text-ink-subtle">
-              <p className="text-base font-semibold text-ink">Welcome to FleetCare</p>
-              <p className="mt-2 text-sm text-ink-subtle">
-                Start by adding your first vehicle to automatically track registration and emissions milestones.
-              </p>
-              <div className="mt-6 flex justify-center gap-3">
-                <AddVehicleButton appearance="primary" />
-                <Button variant="ghost">Import records</Button>
-              </div>
-            </div>
-          ) : null}
-        </div>
-        <aside className="space-y-4">
-          <div className="rounded-2xl border border-border bg-surface-raised p-6 shadow-sm">
-            <p className="text-sm font-semibold text-ink">Upcoming reminders</p>
-            <p className="mt-1 text-xs text-ink-subtle">
-              {upcomingReminderCount} reminders scheduled in the next 90 days.
-            </p>
-            <div className="mt-4">
-              <ReminderTimeline reminders={reminders} />
-            </div>
-          </div>
-        </aside>
-      </section>
+    <AppShell actions={<DashboardActions initialVehicles={vehicles} initialReminders={reminders} />}>
+      <DashboardClient initialVehicles={vehicles} initialReminders={reminders} />
     </AppShell>
   );
 }

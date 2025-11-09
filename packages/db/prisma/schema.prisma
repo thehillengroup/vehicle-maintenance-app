@@ -66,9 +66,9 @@ model Vehicle {
   registrationState     String
   fuelType              FuelType?          @default(GAS)
   purpose               VehiclePurpose     @default(DAILY_DRIVER)
-  registrationRenewedOn DateTime           @default(now())
+  registrationRenewedOn DateTime?
   emissionsTestedOn     DateTime?
-  registrationDueOn     DateTime
+  registrationDueOn     DateTime?
   emissionsDueOn        DateTime?
   mileage               Int?
   color                 String?

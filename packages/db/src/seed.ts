@@ -15,6 +15,7 @@ const seed = async () => {
   await Promise.all([
     upsertVehicle({
       userId: user.id,
+      mergeOnVin: true,
       payload: {
         vin: "1HGCM82633A004352",
         make: "Honda",
@@ -34,6 +35,7 @@ const seed = async () => {
     }),
     upsertVehicle({
       userId: user.id,
+      mergeOnVin: true,
       payload: {
         vin: "5YJ3E1EA7KF317111",
         make: "Tesla",
@@ -53,6 +55,7 @@ const seed = async () => {
     }),
     upsertVehicle({
       userId: user.id,
+      mergeOnVin: true,
       payload: {
         vin: "1C4RJHAG0RC123456",
         make: "Jeep",
@@ -72,6 +75,7 @@ const seed = async () => {
     }),
     upsertVehicle({
       userId: user.id,
+      mergeOnVin: true,
       payload: {
         vin: "WBAFE41010LL23456",
         make: "BMW",
@@ -91,6 +95,7 @@ const seed = async () => {
     }),
     upsertVehicle({
       userId: user.id,
+      mergeOnVin: true,
       payload: {
         vin: "4S4BTANC5N3354321",
         make: "Subaru",

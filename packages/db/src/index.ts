@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import {
   CreateReminderPayload,
   computeComplianceProjection,
@@ -61,21 +62,36 @@ export const ensureUserByEmail = async (email: string) => {
 export interface UpsertVehicleOptions {
   userId: string;
   payload: VehicleUpsertInput;
+  mergeOnVin?: boolean;
+}
+
+export class DuplicateVehicleVinError extends Error {
+  constructor() {
+    super("A vehicle with this VIN already exists.");
+    this.name = "DuplicateVehicleVinError";
+  }
 }
 
 export const upsertVehicle = async ({
   userId,
   payload,
+  mergeOnVin = false,
 }: UpsertVehicleOptions): Promise<Vehicle> => {
   const data = vehicleUpsertSchema.parse(payload);
 
-  const compliance = computeComplianceProjection({
-    state: data.registrationState,
-    modelYear: data.year,
-    fuelType: data.fuelType ?? "GAS",
-    lastRegistrationOn: data.registrationRenewedOn,
-    lastEmissionsOn: data.emissionsTestedOn ?? null,
-  });
+  const compliance = data.registrationRenewedOn
+    ? computeComplianceProjection({
+        state: data.registrationState,
+        modelYear: data.year,
+        fuelType: data.fuelType ?? "GAS",
+        lastRegistrationOn: data.registrationRenewedOn,
+        lastEmissionsOn: data.emissionsTestedOn ?? null,
+      })
+    : {
+        registrationDueOn: null,
+        emissionsDueOn: null,
+        requiresEmissions: false,
+      };
 
   const baseData = {
     userId,
@@ -102,22 +118,36 @@ export const upsertVehicle = async ({
       ? await prisma.vehicle.findFirst({
           where: { id: data.id, userId },
         })
-      : await prisma.vehicle.findFirst({
-          where: { vin: data.vin, userId },
+      : mergeOnVin
+        ? await prisma.vehicle.findFirst({
+            where: { vin: data.vin, userId },
+          })
+        : null;
+
+  try {
+    const result = target
+      ? await prisma.vehicle.update({
+          where: { id: target.id, userId },
+          data: baseData,
+          select: vehicleSelect,
+        })
+      : await prisma.vehicle.create({
+          data: baseData,
+          select: vehicleSelect,
         });
 
-  const result = target
-    ? await prisma.vehicle.update({
-        where: { id: target.id, userId },
-        data: baseData,
-        select: vehicleSelect,
-      })
-    : await prisma.vehicle.create({
-        data: baseData,
-        select: vehicleSelect,
-      });
-
-  return vehicleSchema.parse(result);
+    return vehicleSchema.parse(result);
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002" &&
+      typeof error.meta?.target === "string" &&
+      error.meta.target.includes("vin")
+    ) {
+      throw new DuplicateVehicleVinError();
+    }
+    throw error;
+  }
 };
 
 export const deleteVehicleById = async (userId: string, vehicleId: string) => {
@@ -352,7 +382,7 @@ export const autoScheduleComplianceReminders = async (userId: string) => {
   const batch: Promise<unknown>[] = [];
 
   for (const vehicle of vehicles) {
-    if (isBefore(vehicle.registrationDueOn, now)) {
+    if (vehicle.registrationDueOn && isBefore(vehicle.registrationDueOn, now)) {
       batch.push(
         scheduleReminder(userId, {
           vehicleId: vehicle.id,

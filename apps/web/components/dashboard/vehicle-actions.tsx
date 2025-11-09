@@ -1,19 +1,17 @@
 'use client';
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { useRouter } from "next/navigation";
 import { FiEdit2, FiTrash2 } from "react-icons/fi";
 import { Button } from "@repo/ui/button";
 
 interface VehicleActionsProps {
   vehicleId: string;
   vehicleLabel: string;
+  onDeleted?: () => void;
 }
 
-export const VehicleActions = ({ vehicleId, vehicleLabel }: VehicleActionsProps) => {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+export const VehicleActions = ({ vehicleId, vehicleLabel, onDeleted }: VehicleActionsProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -51,9 +49,7 @@ export const VehicleActions = ({ vehicleId, vehicleLabel }: VehicleActionsProps)
       }
 
       setShowConfirm(false);
-      startTransition(() => {
-        router.refresh();
-      });
+      onDeleted?.();
     } catch (error) {
       console.error(error);
       setShowConfirm(false);
@@ -62,7 +58,7 @@ export const VehicleActions = ({ vehicleId, vehicleLabel }: VehicleActionsProps)
     }
   };
 
-  const disabled = isPending || isDeleting;
+  const disabled = isDeleting;
 
   return (
     <>

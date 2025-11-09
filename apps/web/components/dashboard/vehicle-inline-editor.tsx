@@ -17,7 +17,7 @@ interface EditableVehiclePayload {
   fuelType: Vehicle["fuelType"];
   purpose: Vehicle["purpose"];
   vehicleType: Vehicle["vehicleType"];
-  registrationRenewedOn: string;
+  registrationRenewedOn: string | null;
   emissionsTestedOn: string | null;
   mileage: number | null;
   color: string | null;
@@ -44,11 +44,8 @@ export function VehicleInlineEditor({ vehicle }: { vehicle: EditableVehiclePaylo
   });
 
   const disableSave = useMemo(() => {
-    return (
-      !formState.registrationRenewedOn ||
-      (formState.mileage !== "" && Number.isNaN(Number(formState.mileage)))
-    );
-  }, [formState.registrationRenewedOn, formState.mileage]);
+    return formState.mileage !== "" && Number.isNaN(Number(formState.mileage));
+  }, [formState.mileage]);
 
   const resetForm = () => {
     setFormState({
@@ -63,13 +60,15 @@ export function VehicleInlineEditor({ vehicle }: { vehicle: EditableVehiclePaylo
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (disableSave) {
-      setError("Please provide a valid registration expiration date.");
-      return;
-    }
-
     setError(null);
     setSuccess(null);
+
+    const registrationRenewedOnValue = formState.registrationRenewedOn?.trim()
+      ? formState.registrationRenewedOn
+      : null;
+    const emissionsTestedOnValue = formState.emissionsTestedOn?.trim()
+      ? formState.emissionsTestedOn
+      : null;
 
     const payload = {
       id: vehicle.id,
@@ -82,8 +81,8 @@ export function VehicleInlineEditor({ vehicle }: { vehicle: EditableVehiclePaylo
       fuelType: vehicle.fuelType,
       purpose: vehicle.purpose,
       vehicleType: vehicle.vehicleType,
-      registrationRenewedOn: formState.registrationRenewedOn,
-      emissionsTestedOn: formState.emissionsTestedOn || null,
+      registrationRenewedOn: registrationRenewedOnValue,
+      emissionsTestedOn: emissionsTestedOnValue,
       mileage: formState.mileage ? Number(formState.mileage.replace(/[^\d]/g, "")) : null,
       color: vehicle.color,
       licensePlate: formState.licensePlate ? formState.licensePlate.toUpperCase() : null,

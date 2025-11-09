@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { deleteVehicleById } from "@repo/db";
 import { getDemoUser } from "../../../../lib/demo-user";
 
@@ -16,6 +17,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
   try {
     await deleteVehicleById(user.id, vehicleId);
+    revalidatePath("/");
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
     console.error(error);

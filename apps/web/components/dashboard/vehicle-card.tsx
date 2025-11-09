@@ -13,8 +13,8 @@ import {
 import type { Vehicle } from "@repo/core";
 
 interface ComplianceStatus {
-  registrationDueOn: Date;
-  registrationDueInDays: number;
+  registrationDueOn: Date | null;
+  registrationDueInDays: number | null;
   emissionsDueOn: Date | null;
   emissionsDueInDays: number | null;
 }
@@ -27,6 +27,7 @@ interface VehicleCardProps {
     type: "REGISTRATION" | "EMISSIONS" | "SERVICE";
     dueDate: Date;
   }>;
+  onDeleted?: () => void;
 }
 
 const vehicleTypeLabel: Record<Vehicle["vehicleType"], string> = {
@@ -45,7 +46,7 @@ const describeWindow = (days: number) => {
   return `Due in ${days} days`;
 };
 
-export const VehicleCard = ({ vehicle, compliance, openReminders }: VehicleCardProps) => {
+export const VehicleCard = ({ vehicle, compliance, openReminders, onDeleted }: VehicleCardProps) => {
   return (
     <Card className="shadow-card">
       <CardHeader>
@@ -71,9 +72,14 @@ export const VehicleCard = ({ vehicle, compliance, openReminders }: VehicleCardP
       <CardContent className="grid gap-6 sm:grid-cols-2">
         <div>
           <h4 className="text-sm font-semibold text-ink">Registration</h4>
-          <p className="mt-1 text-sm text-ink-subtle">
-            Expires {format(compliance.registrationDueOn, "MMM d, yyyy")} - {describeWindow(compliance.registrationDueInDays)}
-          </p>
+          {compliance.registrationDueOn ? (
+            <p className="mt-1 text-sm text-ink-subtle">
+              Expires {format(compliance.registrationDueOn, "MMM d, yyyy")} -{" "}
+              {describeWindow(compliance.registrationDueInDays ?? 0)}
+            </p>
+          ) : (
+            <p className="mt-1 text-sm text-ink-subtle">Not scheduled</p>
+          )}
         </div>
         <div>
           <h4 className="text-sm font-semibold text-ink">Emissions</h4>
@@ -110,9 +116,11 @@ export const VehicleCard = ({ vehicle, compliance, openReminders }: VehicleCardP
           fuelType: vehicle.fuelType,
           purpose: vehicle.purpose,
           vehicleType: vehicle.vehicleType,
-          registrationRenewedOn: vehicle.registrationRenewedOn.toISOString(),
+          registrationRenewedOn: vehicle.registrationRenewedOn
+            ? new Date(vehicle.registrationRenewedOn).toISOString()
+            : null,
           emissionsTestedOn: vehicle.emissionsTestedOn
-            ? vehicle.emissionsTestedOn.toISOString()
+            ? new Date(vehicle.emissionsTestedOn).toISOString()
             : null,
           mileage: vehicle.mileage,
           color: vehicle.color,
@@ -131,7 +139,11 @@ export const VehicleCard = ({ vehicle, compliance, openReminders }: VehicleCardP
             <Badge tone="success">No active reminders</Badge>
           )}
         </div>
-        <VehicleActions vehicleId={vehicle.id} vehicleLabel={`${vehicle.make} ${vehicle.model}`} />
+        <VehicleActions
+          vehicleId={vehicle.id}
+          vehicleLabel={`${vehicle.make} ${vehicle.model}`}
+          onDeleted={onDeleted}
+        />
       </CardFooter>
     </Card>
   );

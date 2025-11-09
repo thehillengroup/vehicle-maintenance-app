@@ -87,8 +87,8 @@ export const vehicleSchema = z.object({
   fuelType: fuelTypeSchema.optional().default("GAS"),
   purpose: vehiclePurposeSchema,
   vehicleType: vehicleTypeSchema,
-  registrationRenewedOn: z.coerce.date(),
-  registrationDueOn: z.coerce.date(),
+  registrationRenewedOn: z.coerce.date().nullable(),
+  registrationDueOn: z.coerce.date().nullable(),
   emissionsTestedOn: z.coerce.date().nullable(),
   emissionsDueOn: z.coerce.date().nullable(),
   mileage: z.number().int().nonnegative().nullable(),
@@ -111,14 +111,19 @@ export const vehicleUpsertSchema = vehicleSchema
   .extend({
     id: z.string().min(1).optional(),
     registrationRenewedOn: z
-      .union([z.string(), z.date()])
-      .transform((value) =>
-        typeof value === "string" ? parseISO(value) : value,
-      ),
+      .union([z.string(), z.date(), z.null(), z.undefined()])
+      .transform((value) => {
+        if (value == null || (typeof value === "string" && value.trim() === "")) {
+          return null;
+        }
+        return typeof value === "string" ? parseISO(value) : value;
+      }),
     emissionsTestedOn: z
       .union([z.string(), z.date(), z.null(), z.undefined()])
       .transform((value) => {
-        if (value == null) return null;
+        if (value == null || (typeof value === "string" && value.trim() === "")) {
+          return null;
+        }
         return typeof value === "string" ? parseISO(value) : value;
       }),
     fuelType: fuelTypeSchema.optional(),

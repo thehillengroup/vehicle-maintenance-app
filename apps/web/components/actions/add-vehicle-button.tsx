@@ -9,8 +9,9 @@ import {
   useMemo,
   useRef,
   useState,
+  useTransition,
 } from "react";
-import { useRouter } from "next/navigation";
+import type { Vehicle } from "@repo/core";
 import { FiLoader, FiPlus, FiX } from "react-icons/fi";
 import { Button } from "@repo/ui/button";
 import { US_STATES } from "../../lib/us-states";
@@ -42,7 +43,7 @@ const VEHICLE_PURPOSE_OPTIONS = [
 const DEFAULT_VEHICLE_PURPOSE = VEHICLE_PURPOSE_OPTIONS[0].value;
 
 interface AddVehicleButtonProps {
-  onSuccess?: () => void;
+  onSuccess?: (vehicle: Vehicle) => void;
   appearance?: "glass" | "primary";
   className?: string;
 }
@@ -52,7 +53,7 @@ export const AddVehicleButton = ({
   appearance = "glass",
   className = "",
 }: AddVehicleButtonProps) => {
-  const router = useRouter();
+  const [isRefreshing, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -900,10 +901,19 @@ useEffect(() => {
         throw new Error(message);
       }
 
+      const body = await response.json().catch(() => null);
+      const createdVehicle = body?.data as Vehicle | undefined;
+
       setOpen(false);
-      event.currentTarget.reset();
-      router.refresh();
-      onSuccess?.();
+      formRef.current?.reset();
+      setFormValid(false);
+      startTransition(() => {
+        if (createdVehicle) {
+          onSuccess?.(createdVehicle);
+        } else {
+          onSuccess?.(payload as unknown as Vehicle);
+        }
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unexpected error");
     } finally {
@@ -940,7 +950,7 @@ useEffect(() => {
             </div>
             <form
               ref={formRef}
-              className="mt-6 space-y-4"
+              className="mt-6 space-y-4 text-left"
               onSubmit={handleSubmit}
               onInput={updateFormValidity}
             >
@@ -1346,7 +1356,6 @@ useEffect(() => {
                   <DatePicker
                     name="registrationRenewedOn"
                     placeholder="Select date"
-                    required
                     onValueChange={updateFormValidity}
                   />
                 </label>
@@ -1391,7 +1400,7 @@ useEffect(() => {
                 <Button
                   type="submit"
                   className="flex min-w-[120px] items-center justify-center gap-2 bg-brand-600 text-white transition hover:bg-brand-700"
-                  disabled={submitting || !formValid}
+                  disabled={submitting || isRefreshing || !formValid}
                 >
                   {submitting ? (
                     <>
