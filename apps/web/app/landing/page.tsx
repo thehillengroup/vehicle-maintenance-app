@@ -10,17 +10,17 @@ const quickActions = [
   {
     title: "Add Vehicle",
     description: "Track compliance dates and mileage automatically.",
-    href: "/",
+    href: "/dashboard",
   },
   {
     title: "Log Maintenance",
     description: "Save receipts and build a full service history.",
-    href: "/",
+    href: "/dashboard",
   },
   {
     title: "Import Records",
     description: "Bring in CSV exports or dealership reports.",
-    href: "/",
+    href: "/dashboard",
   },
 ];
 
@@ -48,13 +48,13 @@ export default function LandingPage() {
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Link
-            href="/"
+            href="/dashboard"
             className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-brand-600 shadow-lg shadow-brand-900/10 transition hover:shadow-xl"
           >
             Add your first vehicle
           </Link>
           <Link
-            href="/"
+            href="/dashboard"
             className="rounded-full border border-white/80 px-6 py-3 text-sm font-semibold text-white/90 transition hover:bg-white/10"
           >
             Explore the dashboard
@@ -99,7 +99,7 @@ export default function LandingPage() {
             <p className="text-sm font-semibold">Upcoming reminders</p>
             <p className="text-xs text-ink-muted">Here’s how the timeline looks once your garage is populated.</p>
           </div>
-          <Link href="/" className="text-sm font-semibold text-brand-600 hover:text-brand-700">
+          <Link href="/dashboard" className="text-sm font-semibold text-brand-600 hover:text-brand-700">
             View full schedule →
           </Link>
         </div>
@@ -135,3 +135,4 @@ export default function LandingPage() {
     </main>
   );
 }
+
