@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { DM_Sans, Inter, JetBrains_Mono } from "next/font/google";
+import { Providers } from "./providers";
 
 const headingFont = DM_Sans({
   subsets: ["latin"],
@@ -39,8 +40,11 @@ export default function RootLayout({
       <body
         className={`${headingFont.variable} ${bodyFont.variable} ${monoFont.variable} min-h-full bg-surface text-ink antialiased font-body`}
       >
-        <div className="flex min-h-screen flex-col">{children}</div>
+        <Providers>
+          <div className="flex min-h-screen flex-col">{children}</div>
+        </Providers>
       </body>
     </html>
   );
 }
+

@@ -21,6 +21,7 @@ import {
   getTrimOptions,
 } from "../../lib/vehicle-catalog";
 import { DatePicker } from "../ui/date-picker";
+import { useToast } from "../ui/toast";
 
 const VEHICLE_TYPE_OPTIONS = [
   { value: "SEDAN", label: "Sedan" },
@@ -42,6 +43,20 @@ const VEHICLE_PURPOSE_OPTIONS = [
 
 const DEFAULT_VEHICLE_PURPOSE = VEHICLE_PURPOSE_OPTIONS[0].value;
 
+type ComboField = "make" | "model" | "trim";
+
+const createComboErrorState = (): Record<ComboField, string> => ({
+  make: "",
+  model: "",
+  trim: "",
+});
+
+const comboFieldMessages: Record<ComboField, string> = {
+  make: "Select a make to continue.",
+  model: "Select a model to continue.",
+  trim: "Select a trim before choosing a year.",
+};
+
 interface AddVehicleButtonProps {
   onSuccess?: (vehicle: Vehicle) => void;
   appearance?: "glass" | "primary";
@@ -57,8 +72,12 @@ export const AddVehicleButton = ({
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { publish } = useToast();
   const formRef = useRef<HTMLFormElement | null>(null);
   const [formValid, setFormValid] = useState(false);
+  const [comboErrors, setComboErrors] = useState<Record<ComboField, string>>(
+    createComboErrorState,
+  );
 
   /**
    * --- Make Autocomplete ----------------------------------------------------
@@ -67,6 +86,7 @@ export const AddVehicleButton = ({
    */
   const makeInputRef = useRef<HTMLInputElement | null>(null);
   const makeListboxId = useId();
+  const makeErrorMessageId = `${makeListboxId}-error`;
   const makeOptions = useMemo(() => getMakeOptions(), []);
   const [makeQuery, setMakeQuery] = useState("");
   const [selectedMake, setSelectedMake] = useState("");
@@ -75,6 +95,7 @@ export const AddVehicleButton = ({
 
   const modelInputRef = useRef<HTMLInputElement | null>(null);
   const modelListboxId = useId();
+  const modelErrorMessageId = `${modelListboxId}-error`;
   const [selectedModel, setSelectedModel] = useState("");
   const [modelQuery, setModelQuery] = useState("");
   const [showModelSuggestions, setShowModelSuggestions] = useState(false);
@@ -82,12 +103,30 @@ export const AddVehicleButton = ({
 
   const trimInputRef = useRef<HTMLInputElement | null>(null);
   const trimListboxId = useId();
+  const trimErrorMessageId = `${trimListboxId}-error`;
   const [selectedTrim, setSelectedTrim] = useState("");
   const [trimQuery, setTrimQuery] = useState("");
   const [showTrimSuggestions, setShowTrimSuggestions] = useState(false);
   const [highlightedTrimIndex, setHighlightedTrimIndex] = useState(-1);
   const [vehicleType, setVehicleType] = useState<string>(DEFAULT_VEHICLE_TYPE);
   const [purpose, setPurpose] = useState<string>(DEFAULT_VEHICLE_PURPOSE);
+
+  const resetComboErrors = () => setComboErrors(createComboErrorState());
+
+  const clearComboErrors = (...fields: ComboField[]) => {
+    setComboErrors((prev) => {
+      let next: Record<ComboField, string> | null = null;
+      fields.forEach((field) => {
+        if (prev[field]) {
+          if (!next) {
+            next = { ...prev };
+          }
+          next[field] = "";
+        }
+      });
+      return next ?? prev;
+    });
+  };
 
   const yearInputRef = useRef<HTMLInputElement | null>(null);
   const yearListboxId = useId();
@@ -186,6 +225,8 @@ export const AddVehicleButton = ({
       setVehicleType(DEFAULT_VEHICLE_TYPE);
       setPurpose(DEFAULT_VEHICLE_PURPOSE);
       setFormValid(false);
+      resetComboErrors();
+      setError(null);
     }
   }, [open]);
 
@@ -202,12 +243,14 @@ export const AddVehicleButton = ({
     setTrimQuery("");
     setShowTrimSuggestions(false);
     setHighlightedTrimIndex(-1);
+    resetComboErrors();
   };
 
   const handleMakeChange = (value: string) => {
     setMakeQuery(value);
     setShowMakeSuggestions(true);
     setHighlightedMakeIndex(-1);
+    clearComboErrors("make");
     if (!value.trim()) {
       setSelectedMake("");
       setSelectedModel("");
@@ -337,6 +380,7 @@ export const AddVehicleButton = ({
     setTrimQuery("");
     setShowTrimSuggestions(false);
     setHighlightedTrimIndex(-1);
+    clearComboErrors("model", "trim");
   };
 
   const handleModelChange = (value: string) => {
@@ -344,6 +388,7 @@ export const AddVehicleButton = ({
     setModelQuery(value);
     setShowModelSuggestions(true);
     setHighlightedModelIndex(-1);
+    clearComboErrors("model", "trim");
     setSelectedTrim("");
     setTrimQuery("");
     setShowTrimSuggestions(false);
@@ -398,6 +443,7 @@ export const AddVehicleButton = ({
     setTrimQuery(value);
     setShowTrimSuggestions(false);
     setHighlightedTrimIndex(-1);
+    clearComboErrors("trim");
     if (isChanging) {
       setYearQuery("");
       setSelectedYear("");
@@ -411,6 +457,7 @@ export const AddVehicleButton = ({
     setTrimQuery(value);
     setShowTrimSuggestions(true);
     setHighlightedTrimIndex(-1);
+    clearComboErrors("trim");
     setYearQuery("");
     setSelectedYear("");
     setShowYearSuggestions(false);
@@ -838,9 +885,22 @@ useEffect(() => {
     const colorValue =
       (formData.get("color") as string)?.trim() || null;
 
-    if (!trimValue) {
-      setError("Please choose a trim before selecting a year.");
-      setSubmitting(false);
+    const comboErrorsToApply: Partial<Record<ComboField, string>> = {};
+    let firstInvalidField: ComboField | null = null;
+
+    if (!selectedMake) {
+      comboErrorsToApply.make = comboFieldMessages.make;
+      firstInvalidField = firstInvalidField ?? "make";
+    }
+
+    if (selectedMake && !selectedModel) {
+      comboErrorsToApply.model = comboFieldMessages.model;
+      firstInvalidField = firstInvalidField ?? "model";
+    }
+
+    if (selectedModel && !trimValue) {
+      comboErrorsToApply.trim = comboFieldMessages.trim;
+      firstInvalidField = firstInvalidField ?? "trim";
       setYearQuery("");
       setSelectedYear("");
       setShowYearSuggestions(false);
@@ -849,7 +909,19 @@ useEffect(() => {
         setShowTrimSuggestions(true);
         setHighlightedTrimIndex(-1);
       }
-      trimInputRef.current?.focus();
+    }
+
+    if (firstInvalidField) {
+      setComboErrors((prev) => ({ ...prev, ...comboErrorsToApply }));
+      setError("Please complete the highlighted selections before saving.");
+      setSubmitting(false);
+      if (firstInvalidField === "make") {
+        makeInputRef.current?.focus();
+      } else if (firstInvalidField === "model") {
+        modelInputRef.current?.focus();
+      } else {
+        trimInputRef.current?.focus();
+      }
       return;
     }
 
@@ -907,6 +979,11 @@ useEffect(() => {
       setOpen(false);
       formRef.current?.reset();
       setFormValid(false);
+      publish({
+        title: "Vehicle saved",
+        description: `${payload.year} ${payload.make} ${payload.model}`,
+        tone: "success",
+      });
       startTransition(() => {
         if (createdVehicle) {
           onSuccess?.(createdVehicle);
@@ -960,9 +1037,9 @@ useEffect(() => {
                   <div className="relative">
                     <input
                       ref={makeInputRef}
-                      name="make"
-                      value={makeQuery}
-                      onChange={(event) => handleMakeChange(event.target.value)}
+                    name="make"
+                    value={makeQuery}
+                    onChange={(event) => handleMakeChange(event.target.value)}
                       onFocus={() => setShowMakeSuggestions(true)}
                       onBlur={handleMakeBlur}
                       onKeyDown={handleMakeKeyDown}
@@ -976,10 +1053,12 @@ useEffect(() => {
                           : undefined
                       }
                       autoComplete="off"
-                      spellCheck={false}
-                      placeholder="Start typing a make"
-                      required
-                      className="w-full rounded-lg border border-border py-2 pl-3 pr-9 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+                    spellCheck={false}
+                    placeholder="Start typing a make"
+                    required
+                    aria-invalid={comboErrors.make ? "true" : undefined}
+                    aria-describedby={comboErrors.make ? makeErrorMessageId : undefined}
+                    className="w-full rounded-lg border border-border py-2 pl-3 pr-9 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
                     />
                     {makeQuery ? (
                       <button
@@ -1018,6 +1097,11 @@ useEffect(() => {
                         ))}
                       </ul>
                     ) : null}
+                    {comboErrors.make ? (
+                      <p id={makeErrorMessageId} className="mt-1 text-xs text-danger">
+                        {comboErrors.make}
+                      </p>
+                    ) : null}
                   </div>
                 </label>
 
@@ -1054,6 +1138,8 @@ useEffect(() => {
                       }
                       disabled={!selectedMake}
                       required
+                      aria-invalid={comboErrors.model ? "true" : undefined}
+                      aria-describedby={comboErrors.model ? modelErrorMessageId : undefined}
                       className={`w-full rounded-lg border border-border py-2 pl-3 pr-9 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200 ${
                         selectedMake ? "" : "bg-gray-100 text-ink-muted"
                       }`}
@@ -1104,6 +1190,11 @@ useEffect(() => {
                         )}
                       </ul>
                     ) : null}
+                    {comboErrors.model ? (
+                      <p id={modelErrorMessageId} className="mt-1 text-xs text-danger">
+                        {comboErrors.model}
+                      </p>
+                    ) : null}
                   </div>
                 </label>
 
@@ -1139,6 +1230,8 @@ useEffect(() => {
                           : "Select a model first"
                       }
                       disabled={!selectedMake || !selectedModel}
+                      aria-invalid={comboErrors.trim ? "true" : undefined}
+                      aria-describedby={comboErrors.trim ? trimErrorMessageId : undefined}
                       className={`w-full rounded-lg border border-border py-2 pl-3 pr-9 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200 ${
                         selectedMake && selectedModel
                           ? ""
@@ -1192,6 +1285,11 @@ useEffect(() => {
                           ))
                         )}
                       </ul>
+                    ) : null}
+                    {comboErrors.trim ? (
+                      <p id={trimErrorMessageId} className="mt-1 text-xs text-danger">
+                        {comboErrors.trim}
+                      </p>
                     ) : null}
                   </div>
                 </label>

@@ -48,6 +48,13 @@ export const DatePicker = ({
   className,
   onValueChange,
 }: DatePickerProps) => {
+  const { minDate: resolvedMinDate, maxDate: resolvedMaxDate } = useMemo(() => {
+    const now = new Date();
+    const start = minDate ?? new Date(now.getFullYear(), 0, 1);
+    const end = maxDate ?? new Date(now.getFullYear() + 10, 11, 31);
+    return { minDate: start, maxDate: end };
+  }, [minDate, maxDate]);
+
   const initialDate = useMemo(() => {
     if (!defaultValue) return null;
     try {
@@ -88,8 +95,8 @@ export const DatePicker = ({
         dateFormat="yyyy-MM-dd"
         placeholderText={placeholder}
         disabled={disabled}
-        minDate={minDate}
-        maxDate={maxDate}
+        minDate={resolvedMinDate}
+        maxDate={resolvedMaxDate}
         calendarClassName="vm-datepicker"
         popperClassName="vm-datepicker-popper"
         showMonthDropdown

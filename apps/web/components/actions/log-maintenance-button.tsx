@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { FiLoader, FiX } from "react-icons/fi";
 import { GiMechanicGarage } from "react-icons/gi";
@@ -19,9 +19,26 @@ export const LogMaintenanceButton = ({ vehicles, onSuccess }: LogMaintenanceButt
   const disabled = vehicles.length === 0;
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedVehicleId, setSelectedVehicleId] = useState<string>("");
+
+  const selectedVehicle = useMemo(
+    () => vehicles.find((vehicle) => vehicle.id === selectedVehicleId) ?? null,
+    [vehicles, selectedVehicleId],
+  );
+
+  const currentYear = new Date().getFullYear();
+  const serviceDateMin = selectedVehicle
+    ? new Date(selectedVehicle.year, 0, 1)
+    : undefined;
+  const serviceDateMax = new Date(currentYear, 11, 31);
+
+  const formDisabled = !selectedVehicle || submitting;
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!selectedVehicle) {
+      return;
+    }
     setSubmitting(true);
     setError(null);
 
@@ -56,6 +73,7 @@ export const LogMaintenanceButton = ({ vehicles, onSuccess }: LogMaintenanceButt
 
       setOpen(false);
       event.currentTarget.reset();
+      setSelectedVehicleId("");
       router.refresh();
       onSuccess?.();
     } catch (err) {
@@ -74,14 +92,14 @@ export const LogMaintenanceButton = ({ vehicles, onSuccess }: LogMaintenanceButt
         disabled={disabled}
       >
         <GiMechanicGarage className="h-4 w-4" />
-        Log maintenance
+        Log Maintenance
       </Button>
       {open && !disabled ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-8">
           <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
             <div className="flex items-center justify-between">
               <h2 className="font-heading text-lg font-semibold text-ink">
-                Log maintenance
+                Log Maintenance
               </h2>
               <button
                 type="button"
@@ -99,8 +117,9 @@ export const LogMaintenanceButton = ({ vehicles, onSuccess }: LogMaintenanceButt
                   <select
                     name="vehicleId"
                     required
+                    value={selectedVehicleId}
+                    onChange={(event) => setSelectedVehicleId(event.target.value)}
                     className="rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
-                    defaultValue=""
                   >
                     <option value="" disabled>
                       Select vehicle
@@ -118,6 +137,10 @@ export const LogMaintenanceButton = ({ vehicles, onSuccess }: LogMaintenanceButt
                     name="serviceDate"
                     placeholder="Select date"
                     required
+                    disabled={formDisabled}
+                    minDate={serviceDateMin}
+                    maxDate={serviceDateMax}
+                    key={selectedVehicleId || "no-vehicle"}
                   />
                 </label>
                 <label className="flex flex-col gap-1 text-sm text-ink">
@@ -126,6 +149,7 @@ export const LogMaintenanceButton = ({ vehicles, onSuccess }: LogMaintenanceButt
                     name="odometer"
                     type="number"
                     min="0"
+                    disabled={formDisabled}
                     className="rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
                   />
                 </label>
@@ -135,6 +159,7 @@ export const LogMaintenanceButton = ({ vehicles, onSuccess }: LogMaintenanceButt
                     required
                     name="headline"
                     placeholder="Oil change, tire rotation..."
+                    disabled={formDisabled}
                     className="rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
                   />
                 </label>
@@ -145,6 +170,7 @@ export const LogMaintenanceButton = ({ vehicles, onSuccess }: LogMaintenanceButt
                     type="number"
                     min="0"
                     step="0.01"
+                    disabled={formDisabled}
                     className="rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
                   />
                 </label>
@@ -152,6 +178,7 @@ export const LogMaintenanceButton = ({ vehicles, onSuccess }: LogMaintenanceButt
                   Location / provider
                   <input
                     name="location"
+                    disabled={formDisabled}
                     className="rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
                   />
                 </label>
@@ -160,6 +187,7 @@ export const LogMaintenanceButton = ({ vehicles, onSuccess }: LogMaintenanceButt
                   <textarea
                     name="notes"
                     rows={3}
+                    disabled={formDisabled}
                     className="rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
                   />
                 </label>
@@ -184,7 +212,7 @@ export const LogMaintenanceButton = ({ vehicles, onSuccess }: LogMaintenanceButt
                 <Button
                   type="submit"
                   className="flex min-w-[160px] items-center justify-center gap-2 bg-brand-600 text-white transition hover:bg-brand-700"
-                  disabled={submitting}
+                  disabled={formDisabled}
                 >
                   {submitting ? (
                     <>
@@ -192,7 +220,7 @@ export const LogMaintenanceButton = ({ vehicles, onSuccess }: LogMaintenanceButt
                       Logging
                     </>
                   ) : (
-                    "Log maintenance"
+                    "Log Maintenance"
                   )}
                 </Button>
               </div>

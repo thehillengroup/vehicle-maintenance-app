@@ -70,7 +70,7 @@ export const VehicleCard = ({ vehicle, compliance, openReminders, onDeleted, onU
           {` · ${vehicle.registrationState} - ${vehicle.fuelType}`}
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-6 sm:grid-cols-2">
+      <CardContent className="!space-y-0 grid gap-6 sm:grid-cols-2">
         <div>
           <h4 className="text-sm font-semibold text-ink">Registration</h4>
           {compliance.registrationDueOn ? (
