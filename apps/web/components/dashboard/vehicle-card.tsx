@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { differenceInCalendarDays, format } from "date-fns";
 import { Badge } from "@repo/ui/badge";
 import { VehicleActions } from "./vehicle-actions";
@@ -48,6 +49,8 @@ const describeWindow = (days: number) => {
 };
 
 export const VehicleCard = ({ vehicle, compliance, openReminders, onDeleted, onUpdated }: VehicleCardProps) => {
+  const [showQuickEdit, setShowQuickEdit] = useState(false);
+
   return (
     <Card className="shadow-card">
       <CardHeader>
@@ -105,7 +108,13 @@ export const VehicleCard = ({ vehicle, compliance, openReminders, onDeleted, onU
           </p>
         </div>
       </CardContent>
-      <VehicleInlineEditor vehicle={vehicle} onUpdated={onUpdated} />
+      {showQuickEdit ? (
+        <VehicleInlineEditor
+          vehicle={vehicle}
+          onUpdated={onUpdated}
+          onClose={() => setShowQuickEdit(false)}
+        />
+      ) : null}
       <CardFooter className="flex items-center justify-between">
         <div className="flex flex-wrap gap-2">
           {openReminders.length ? (
@@ -122,6 +131,8 @@ export const VehicleCard = ({ vehicle, compliance, openReminders, onDeleted, onU
           vehicleId={vehicle.id}
           vehicleLabel={`${vehicle.make} ${vehicle.model}`}
           onDeleted={onDeleted}
+          onEdit={() => setShowQuickEdit((prev) => !prev)}
+          isEditing={showQuickEdit}
         />
       </CardFooter>
     </Card>

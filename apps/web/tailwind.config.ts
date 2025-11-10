@@ -12,16 +12,16 @@ const config: Config = {
     extend: {
       colors: {
         brand: {
-          50: "#085078",
-          100: "#085078",
-          200: "#085078",
-          300: "#085078",
-          400: "#085078",
-          500: "#085078",
-          600: "#085078",
-          700: "#085078",
-          800: "#085078",
-          900: "#085078",
+          50: "rgb(5 150 105 / <alpha-value>)",
+          100: "rgb(5 150 105 / <alpha-value>)",
+          200: "rgb(5 150 105 / <alpha-value>)",
+          300: "rgb(5 150 105 / <alpha-value>)",
+          400: "rgb(5 150 105 / <alpha-value>)",
+          500: "rgb(5 150 105 / <alpha-value>)",
+          600: "rgb(5 150 105 / <alpha-value>)",
+          700: "rgb(5 150 105 / <alpha-value>)",
+          800: "rgb(5 150 105 / <alpha-value>)",
+          900: "rgb(5 150 105 / <alpha-value>)",
         },
         accent: {
           50: "#fff1e7",

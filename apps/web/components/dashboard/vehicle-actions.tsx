@@ -9,9 +9,11 @@ interface VehicleActionsProps {
   vehicleId: string;
   vehicleLabel: string;
   onDeleted?: () => void;
+  onEdit?: () => void;
+  isEditing?: boolean;
 }
 
-export const VehicleActions = ({ vehicleId, vehicleLabel, onDeleted }: VehicleActionsProps) => {
+export const VehicleActions = ({ vehicleId, vehicleLabel, onDeleted, onEdit, isEditing = false }: VehicleActionsProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -66,8 +68,14 @@ export const VehicleActions = ({ vehicleId, vehicleLabel, onDeleted }: VehicleAc
         <button
           type="button"
           aria-label="Edit vehicle"
-          className="rounded-full p-2 transition hover:bg-ink-muted/10 disabled:opacity-50"
+          className={`rounded-full p-2 transition disabled:opacity-50 ${
+            isEditing
+              ? "bg-white text-brand-600 ring-1 ring-brand-200 shadow-sm"
+              : "hover:bg-ink-muted/10"
+          }`}
           disabled={disabled}
+          onClick={onEdit}
+          aria-pressed={isEditing}
         >
           <FiEdit2 className="h-4 w-4" />
         </button>

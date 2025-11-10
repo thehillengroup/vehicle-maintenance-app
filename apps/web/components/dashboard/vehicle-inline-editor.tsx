@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState, useTransition } from "react";
-import { FiEdit3, FiSave, FiX } from "react-icons/fi";
+import { FiSave, FiX } from "react-icons/fi";
 import { Vehicle } from "@repo/core";
 import { Button } from "@repo/ui/button";
 import { DatePicker } from "../ui/date-picker";
@@ -22,10 +22,10 @@ const buildFormState = (source: Vehicle) => ({
 interface VehicleInlineEditorProps {
   vehicle: Vehicle;
   onUpdated?: (vehicle: Vehicle) => void;
+  onClose: () => void;
 }
 
-export function VehicleInlineEditor({ vehicle, onUpdated }: VehicleInlineEditorProps) {
-  const [editing, setEditing] = useState(false);
+export function VehicleInlineEditor({ vehicle, onUpdated, onClose }: VehicleInlineEditorProps) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -109,10 +109,10 @@ export function VehicleInlineEditor({ vehicle, onUpdated }: VehicleInlineEditorP
         };
 
         setSuccess("Vehicle updated");
-        setEditing(false);
         const resolvedVehicle = updatedVehicle ?? fallbackVehicle;
         onUpdated?.(resolvedVehicle);
         resetForm(resolvedVehicle);
+        onClose();
       } catch (err) {
         setError(err instanceof Error ? err.message : "Unexpected error");
       }
@@ -121,111 +121,92 @@ export function VehicleInlineEditor({ vehicle, onUpdated }: VehicleInlineEditorP
 
   return (
     <div className="border-t border-border bg-surface-raised/60 px-4 py-3">
-      {editing ? (
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold text-ink">Quick edit</p>
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                className="text-sm text-ink-subtle hover:text-ink"
-                onClick={() => {
-                  resetForm();
-                  setEditing(false);
-                }}
-              >
-                <FiX className="mr-1 inline h-4 w-4" />
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                className="flex items-center gap-2"
-                disabled={disableSave || isPending}
-              >
-                <FiSave className="h-4 w-4" />
-                Save
-              </Button>
-            </div>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="text-xs uppercase tracking-wide text-ink-subtle">
-              License plate
-              <input
-                className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm text-ink outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
-                value={formState.licensePlate}
-                onChange={(event) =>
-                  setFormState((prev) => ({
-                    ...prev,
-                    licensePlate: event.target.value.toUpperCase(),
-                  }))
-                }
-              />
-            </label>
-            <label className="text-xs uppercase tracking-wide text-ink-subtle">
-              Mileage
-              <input
-                type="number"
-                min="0"
-                className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm text-ink outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
-                value={formState.mileage}
-                onChange={(event) =>
-                  setFormState((prev) => ({ ...prev, mileage: event.target.value }))
-                }
-                placeholder="e.g. 45210"
-              />
-            </label>
-            <label className="text-xs uppercase tracking-wide text-ink-subtle">
-              Registration expires on
-              <DatePicker
-                name="registrationRenewedOn"
-                required
-                placeholder="Select date"
-                defaultValue={formState.registrationRenewedOn || null}
-                onValueChange={(value) =>
-                  setFormState((prev) => ({
-                    ...prev,
-                    registrationRenewedOn: value ?? "",
-                  }))
-                }
-              />
-            </label>
-            <label className="text-xs uppercase tracking-wide text-ink-subtle sm:col-span-2">
-              Emission due date
-              <DatePicker
-                name="emissionsTestedOn"
-                placeholder="Select date"
-                defaultValue={formState.emissionsTestedOn || null}
-                onValueChange={(value) =>
-                  setFormState((prev) => ({
-                    ...prev,
-                    emissionsTestedOn: value ?? "",
-                  }))
-                }
-              />
-            </label>
-          </div>
-          {error ? <p className="text-sm text-danger">{error}</p> : null}
-          {success ? <p className="text-sm text-success">{success}</p> : null}
-        </form>
-      ) : (
+      <form className="space-y-4" onSubmit={handleSubmit}>
         <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-semibold text-ink">Quick edit</p>
-            <p className="text-xs text-ink-subtle">
-              Update plates, mileage, or compliance dates inline.
-            </p>
+          <p className="text-sm font-semibold text-ink">Quick edit</p>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              className="text-sm text-ink-subtle hover:text-ink"
+              onClick={() => {
+                resetForm();
+                onClose();
+              }}
+            >
+              <FiX className="mr-1 inline h-4 w-4" />
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              className="flex items-center gap-2"
+              disabled={disableSave || isPending}
+            >
+              <FiSave className="h-4 w-4" />
+              Save
+            </Button>
           </div>
-          <Button
-            variant="ghost"
-            className="flex items-center gap-2 text-sm"
-            onClick={() => setEditing(true)}
-          >
-            <FiEdit3 className="h-4 w-4" />
-            Edit details
-          </Button>
         </div>
-      )}
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="text-xs uppercase tracking-wide text-ink-subtle">
+            License plate
+            <input
+              className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm text-ink outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+              value={formState.licensePlate}
+              onChange={(event) =>
+                setFormState((prev) => ({
+                  ...prev,
+                  licensePlate: event.target.value.toUpperCase(),
+                }))
+              }
+            />
+          </label>
+          <label className="text-xs uppercase tracking-wide text-ink-subtle">
+            Mileage
+            <input
+              type="number"
+              min="0"
+              className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm text-ink outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+              value={formState.mileage}
+              onChange={(event) =>
+                setFormState((prev) => ({ ...prev, mileage: event.target.value }))
+              }
+              placeholder="e.g. 45210"
+            />
+          </label>
+          <label className="text-xs uppercase tracking-wide text-ink-subtle">
+            Registration expires on
+            <DatePicker
+              name="registrationRenewedOn"
+              required
+              placeholder="Select date"
+              defaultValue={formState.registrationRenewedOn || null}
+              onValueChange={(value) =>
+                setFormState((prev) => ({
+                  ...prev,
+                  registrationRenewedOn: value ?? "",
+                }))
+              }
+            />
+          </label>
+          <label className="text-xs uppercase tracking-wide text-ink-subtle sm:col-span-2">
+            Emission due date
+            <DatePicker
+              name="emissionsTestedOn"
+              placeholder="Select date"
+              defaultValue={formState.emissionsTestedOn || null}
+              onValueChange={(value) =>
+                setFormState((prev) => ({
+                  ...prev,
+                  emissionsTestedOn: value ?? "",
+                }))
+              }
+            />
+          </label>
+        </div>
+        {error ? <p className="text-sm text-danger">{error}</p> : null}
+        {success ? <p className="text-sm text-success">{success}</p> : null}
+      </form>
     </div>
   );
 }
