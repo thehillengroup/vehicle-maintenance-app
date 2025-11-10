@@ -21,16 +21,16 @@ export const AppShell = ({ children, actions }: { children: React.ReactNode; act
         </div>
       </header>
       <main className="space-y-8">{children}</main>
-      <footer className="mt-16 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-6 text-xs text-ink-subtle">
+      <footer className="mt-16 flex flex-wrap items-center justify-between gap-4 border-t border-white/40 pt-6 text-xs text-white">
         <p>&copy; {new Date().getFullYear()} FleetCare. All rights reserved.</p>
-        <nav className="flex gap-4">
-          <Link className="transition hover:text-brand-600" href="#">
+        <nav className="flex gap-4 text-white">
+          <Link className="transition hover:text-white/80" href="#">
             Privacy
           </Link>
-          <Link className="transition hover:text-brand-600" href="#">
+          <Link className="transition hover:text-white/80" href="#">
             Terms
           </Link>
-          <Link className="transition hover:text-brand-600" href="#">
+          <Link className="transition hover:text-white/80" href="#">
             Support
           </Link>
         </nav>

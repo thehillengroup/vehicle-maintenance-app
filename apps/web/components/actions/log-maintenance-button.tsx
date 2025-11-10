@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent, useMemo } from "react";
+import { useState, FormEvent, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FiLoader, FiX } from "react-icons/fi";
 import { GiMechanicGarage } from "react-icons/gi";
@@ -11,11 +11,12 @@ import { DatePicker } from "../ui/date-picker";
 interface LogMaintenanceButtonProps {
   vehicles: Vehicle[];
   onSuccess?: () => void;
+  autoOpen?: boolean;
 }
 
-export const LogMaintenanceButton = ({ vehicles, onSuccess }: LogMaintenanceButtonProps) => {
+export const LogMaintenanceButton = ({ vehicles, onSuccess, autoOpen = false }: LogMaintenanceButtonProps) => {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(autoOpen);
   const disabled = vehicles.length === 0;
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,6 +34,11 @@ export const LogMaintenanceButton = ({ vehicles, onSuccess }: LogMaintenanceButt
   const serviceDateMax = new Date(currentYear, 11, 31);
 
   const formDisabled = !selectedVehicle || submitting;
+  useEffect(() => {
+    if (autoOpen) {
+      setOpen(true);
+    }
+  }, [autoOpen]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

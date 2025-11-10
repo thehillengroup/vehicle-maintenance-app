@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { differenceInCalendarDays, formatDistanceToNow } from "date-fns";
 import type { Reminder, Vehicle } from "@repo/core";
 import { StatCard } from "./stat-card";
@@ -26,6 +26,23 @@ export function DashboardClient({ initialVehicles, initialReminders }: Dashboard
     updateVehicleOptimistic,
   } = useDashboardData(initialVehicles, initialReminders);
   const now = new Date();
+  const [modalToOpen, setModalToOpen] = useState<string | null>(null);
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem("dashboard:modal");
+    if (stored === "add-vehicle" || stored === "log-maintenance") {
+      setModalToOpen(stored);
+      sessionStorage.removeItem("dashboard:modal");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (modalToOpen) {
+      const id = requestAnimationFrame(() => setModalToOpen(null));
+      return () => cancelAnimationFrame(id);
+    }
+    return undefined;
+  }, [modalToOpen]);
 
   const sortedVehicles = useMemo(() => {
     return [...vehicles].sort((a, b) => {
@@ -82,6 +99,8 @@ export function DashboardClient({ initialVehicles, initialReminders }: Dashboard
 
   const totalMileage = vehicles.reduce((sum, vehicle) => sum + (vehicle.mileage ?? 0), 0);
   const upcomingReminderCount = reminders.length;
+  const autoOpenAddVehicle = modalToOpen === "add-vehicle";
+  const autoOpenLogMaintenance = modalToOpen === "log-maintenance";
 
   const latestVehicleUpdatedAt = vehicles.reduce<Date | null>((latest, vehicle) => {
     const updated = new Date(vehicle.updatedAt);
@@ -183,8 +202,8 @@ export function DashboardClient({ initialVehicles, initialReminders }: Dashboard
       </section>
 
       <div className="mt-8 flex items-center gap-2">
-        <AddVehicleButton onSuccess={handleVehicleAdded} />
-        <LogMaintenanceButton vehicles={vehicles} onSuccess={refreshAll} />
+        <AddVehicleButton onSuccess={handleVehicleAdded} autoOpen={autoOpenAddVehicle} />
+        <LogMaintenanceButton vehicles={vehicles} onSuccess={refreshAll} autoOpen={autoOpenLogMaintenance} />
       </div>
     </>
   );

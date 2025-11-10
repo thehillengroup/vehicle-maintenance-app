@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { DashboardCta } from "../../components/landing/dashboard-cta";
 
 const checklist = [
   "Have your VIN handy",
@@ -6,21 +6,27 @@ const checklist = [
   "Estimate current mileage",
 ];
 
-const quickActions = [
+interface QuickAction {
+  title: string;
+  description: string;
+  modal?: "add-vehicle" | "log-maintenance";
+}
+
+const quickActions: QuickAction[] = [
   {
     title: "Add Vehicle",
     description: "Track compliance dates and mileage automatically.",
-    href: "/dashboard",
+    modal: "add-vehicle" as const,
   },
   {
     title: "Log Maintenance",
     description: "Save receipts and build a full service history.",
-    href: "/dashboard",
+    modal: "log-maintenance" as const,
   },
   {
     title: "Import Records",
     description: "Bring in CSV exports or dealership reports.",
-    href: "/dashboard",
+    modal: undefined,
   },
 ];
 
@@ -47,18 +53,15 @@ export default function LandingPage() {
           Jump in with your first vehicle or import existing records—your future self will thank you.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <Link
-            href="/dashboard"
+          <DashboardCta
+            modal="add-vehicle"
             className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-brand-600 shadow-lg shadow-brand-900/10 transition hover:shadow-xl"
           >
             Add your first vehicle
-          </Link>
-          <Link
-            href="/dashboard"
-            className="rounded-full border border-white/80 px-6 py-3 text-sm font-semibold text-white/90 transition hover:bg-white/10"
-          >
+          </DashboardCta>
+          <DashboardCta className="rounded-full border border-white/80 px-6 py-3 text-sm font-semibold text-white/90 transition hover:bg-white/10">
             Explore the dashboard
-          </Link>
+          </DashboardCta>
         </div>
       </section>
 
@@ -78,17 +81,17 @@ export default function LandingPage() {
 
         <div className="grid gap-4 md:grid-cols-3">
           {quickActions.map((action) => (
-            <Link
+            <DashboardCta
               key={action.title}
-              href={action.href}
-              className="rounded-2xl border border-border bg-white p-5 text-ink shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+              modal={action.modal}
+              className="rounded-2xl border border-border bg-white p-5 text-left text-ink shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
             >
               <p className="text-sm font-semibold">{action.title}</p>
               <p className="mt-2 text-sm text-ink-muted">{action.description}</p>
               <span className="mt-4 inline-flex items-center text-xs font-semibold uppercase tracking-wide text-brand-600">
                 Get started →
               </span>
-            </Link>
+            </DashboardCta>
           ))}
         </div>
       </section>
@@ -99,9 +102,9 @@ export default function LandingPage() {
             <p className="text-sm font-semibold">Upcoming reminders</p>
             <p className="text-xs text-ink-muted">Here’s how the timeline looks once your garage is populated.</p>
           </div>
-          <Link href="/dashboard" className="text-sm font-semibold text-brand-600 hover:text-brand-700">
+          <DashboardCta className="text-sm font-semibold text-brand-600 hover:text-brand-700">
             View full schedule →
-          </Link>
+          </DashboardCta>
         </div>
         <div className="mt-5 grid gap-4 sm:grid-cols-3">
           {sampleReminders.map((reminder) => (
@@ -135,4 +138,5 @@ export default function LandingPage() {
     </main>
   );
 }
+
 

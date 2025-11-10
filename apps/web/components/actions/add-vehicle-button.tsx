@@ -61,15 +61,17 @@ interface AddVehicleButtonProps {
   onSuccess?: (vehicle: Vehicle) => void;
   appearance?: "glass" | "primary";
   className?: string;
+  autoOpen?: boolean;
 }
 
 export const AddVehicleButton = ({
   onSuccess,
   appearance = "glass",
   className = "",
+  autoOpen = false,
 }: AddVehicleButtonProps) => {
   const [isRefreshing, startTransition] = useTransition();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(autoOpen);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { publish } = useToast();
@@ -78,6 +80,12 @@ export const AddVehicleButton = ({
   const [comboErrors, setComboErrors] = useState<Record<ComboField, string>>(
     createComboErrorState,
   );
+
+  useEffect(() => {
+    if (autoOpen) {
+      setOpen(true);
+    }
+  }, [autoOpen]);
 
   /**
    * --- Make Autocomplete ----------------------------------------------------
