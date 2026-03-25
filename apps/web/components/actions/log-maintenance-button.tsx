@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, FormEvent, useMemo, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { FiLoader, FiX } from "react-icons/fi";
 import { GiMechanicGarage } from "react-icons/gi";
@@ -92,7 +93,7 @@ export const LogMaintenanceButton = ({ vehicles, onSuccess, autoOpen = false }: 
   return (
     <>
       <Button
-        className="border border-white/40 bg-white/10 text-black transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
+        variant="secondary"
         onClick={() => !disabled && setOpen(true)}
         type="button"
         disabled={disabled}
@@ -100,11 +101,11 @@ export const LogMaintenanceButton = ({ vehicles, onSuccess, autoOpen = false }: 
         <GiMechanicGarage className="h-4 w-4" />
         Log Maintenance
       </Button>
-      {open && !disabled ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-8">
-          <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
+      {open && !disabled ? createPortal(
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 px-4 py-8 backdrop-blur-sm" onClick={() => setOpen(false)}>
+          <div className="w-full max-w-2xl rounded-xl border border-border bg-surface-raised p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="font-heading text-lg font-semibold text-ink">
+              <h2 className="font-heading text-base font-semibold text-ink">
                 Log Maintenance
               </h2>
               <button
@@ -125,7 +126,7 @@ export const LogMaintenanceButton = ({ vehicles, onSuccess, autoOpen = false }: 
                     required
                     value={selectedVehicleId}
                     onChange={(event) => setSelectedVehicleId(event.target.value)}
-                    className="rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+                    className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
                   >
                     <option value="" disabled>
                       Select vehicle
@@ -156,7 +157,7 @@ export const LogMaintenanceButton = ({ vehicles, onSuccess, autoOpen = false }: 
                     type="number"
                     min="0"
                     disabled={formDisabled}
-                    className="rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+                    className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
                   />
                 </label>
                 <label className="flex flex-col gap-1 text-sm text-ink sm:col-span-2">
@@ -166,7 +167,7 @@ export const LogMaintenanceButton = ({ vehicles, onSuccess, autoOpen = false }: 
                     name="headline"
                     placeholder="Oil change, tire rotation..."
                     disabled={formDisabled}
-                    className="rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+                    className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
                   />
                 </label>
                 <label className="flex flex-col gap-1 text-sm text-ink">
@@ -177,7 +178,7 @@ export const LogMaintenanceButton = ({ vehicles, onSuccess, autoOpen = false }: 
                     min="0"
                     step="0.01"
                     disabled={formDisabled}
-                    className="rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+                    className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
                   />
                 </label>
                 <label className="flex flex-col gap-1 text-sm text-ink">
@@ -185,7 +186,7 @@ export const LogMaintenanceButton = ({ vehicles, onSuccess, autoOpen = false }: 
                   <input
                     name="location"
                     disabled={formDisabled}
-                    className="rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+                    className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
                   />
                 </label>
                 <label className="flex flex-col gap-1 text-sm text-ink sm:col-span-2">
@@ -194,7 +195,7 @@ export const LogMaintenanceButton = ({ vehicles, onSuccess, autoOpen = false }: 
                     name="notes"
                     rows={3}
                     disabled={formDisabled}
-                    className="rounded-lg border border-border px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+                    className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
                   />
                 </label>
               </div>
@@ -232,7 +233,8 @@ export const LogMaintenanceButton = ({ vehicles, onSuccess, autoOpen = false }: 
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       ) : null}
     </>
   );

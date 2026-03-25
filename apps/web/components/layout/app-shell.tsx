@@ -1,39 +1,50 @@
 import Link from "next/link";
-import { FiLogIn } from "react-icons/fi";
-import { Button } from "@repo/ui/button";
+import { ThemeToggle } from "../ui/theme-toggle";
+import { WordmarkLogo } from "../ui/wordmark-logo";
 
-export const AppShell = ({ children, actions }: { children: React.ReactNode; actions?: React.ReactNode }) => {
+export const AppShell = ({
+  children,
+  actions,
+}: {
+  children: React.ReactNode;
+  actions?: React.ReactNode;
+}) => {
   return (
-    <div className="mx-auto w-full max-w-6xl px-6 py-10">
-      <header className="mb-10 flex items-center justify-between border-b border-white/60 py-4">
-        <Link href="#" className="font-heading text-xl font-semibold text-ink">
-          FleetCare
-        </Link>
-        <div className="flex items-center gap-3">
-          {actions}
-          <Button
-            variant="ghost"
-            className="flex items-center gap-2 rounded-full border border-white/40 bg-white/10 px-3 py-1.5 text-sm font-medium text-ink transition hover:bg-white/20"
-          >
-            <FiLogIn className="h-4 w-4" />
-            <span className="hidden sm:inline">Log in</span>
-          </Button>
+    <div className="flex min-h-screen flex-col bg-surface">
+      <header className="sticky top-0 z-40 border-b border-border bg-surface/80 backdrop-blur-sm">
+        <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
+          <Link href="/" aria-label="CarFolio home">
+            <WordmarkLogo />
+          </Link>
+
+          <div className="flex items-center gap-2">
+            {actions}
+            <ThemeToggle />
+          </div>
         </div>
       </header>
-      <main className="space-y-8">{children}</main>
-      <footer className="mt-16 flex flex-wrap items-center justify-between gap-4 border-t border-white/40 pt-6 text-xs text-white">
-        <p>&copy; {new Date().getFullYear()} FleetCare. All rights reserved.</p>
-        <nav className="flex gap-4 text-white">
-          <Link className="transition hover:text-white/80" href="#">
-            Privacy
-          </Link>
-          <Link className="transition hover:text-white/80" href="#">
-            Terms
-          </Link>
-          <Link className="transition hover:text-white/80" href="#">
-            Support
-          </Link>
-        </nav>
+
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 space-y-8">
+        {children}
+      </main>
+
+      <footer className="border-t border-border">
+        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-5 sm:px-6">
+          <p className="text-xs text-ink-subtle">
+            &copy; {new Date().getFullYear()} CarFolio. All rights reserved.
+          </p>
+          <nav className="flex gap-4">
+            <Link className="text-xs text-ink-subtle transition hover:text-ink" href="#">
+              Privacy
+            </Link>
+            <Link className="text-xs text-ink-subtle transition hover:text-ink" href="#">
+              Terms
+            </Link>
+            <Link className="text-xs text-ink-subtle transition hover:text-ink" href="#">
+              Support
+            </Link>
+          </nav>
+        </div>
       </footer>
     </div>
   );

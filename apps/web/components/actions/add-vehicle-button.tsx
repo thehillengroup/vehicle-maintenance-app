@@ -11,6 +11,7 @@ import {
   useState,
   useTransition,
 } from "react";
+import { createPortal } from "react-dom";
 import type { Vehicle } from "@repo/core";
 import { FiLoader, FiPlus, FiX } from "react-icons/fi";
 import { Button } from "@repo/ui/button";
@@ -1011,18 +1012,18 @@ useEffect(() => {
       <Button
         className={`${appearance === "primary"
           ? "bg-brand-600 text-white transition hover:bg-brand-700 focus-visible:ring-2 focus-visible:ring-brand-200"
-          : "border border-white/40 bg-white/10 text-black transition hover:bg-white/20"} ${className}`}
+          : "border border-border bg-surface-subtle text-ink transition hover:bg-surface-raised"} ${className}`}
         onClick={() => setOpen(true)}
       >
         <FiPlus className="h-4 w-4" />
-        Add vehicle
+        Add Vehicle
       </Button>
-      {open ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-8">
-          <div className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-xl">
+      {open ? createPortal(
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 px-4 py-8 backdrop-blur-sm" onClick={() => setOpen(false)}>
+          <div className="w-full max-w-xl rounded-xl border border-border bg-surface-raised p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="font-heading text-lg font-semibold text-ink">
-                Add vehicle
+              <h2 className="font-heading text-base font-semibold text-ink">
+                Add Vehicle
               </h2>
               <button
                 type="button"
@@ -1066,7 +1067,7 @@ useEffect(() => {
                     required
                     aria-invalid={comboErrors.make ? "true" : undefined}
                     aria-describedby={comboErrors.make ? makeErrorMessageId : undefined}
-                    className="w-full rounded-lg border border-border py-2 pl-3 pr-9 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+                    className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
                     />
                     {makeQuery ? (
                       <button
@@ -1082,7 +1083,7 @@ useEffect(() => {
                       <ul
                         id={makeListboxId}
                         role="listbox"
-                        className="absolute left-0 right-0 z-20 mt-1 max-h-60 overflow-auto rounded-lg border border-border bg-white p-1 shadow-lg"
+                        className="absolute left-0 right-0 z-20 mt-1 max-h-60 overflow-auto rounded-lg border border-border bg-surface-raised p-1 shadow-lg"
                       >
                         {filteredMakeOptions.map((option, index) => (
                           <li key={option} role="presentation">
@@ -1148,7 +1149,7 @@ useEffect(() => {
                       required
                       aria-invalid={comboErrors.model ? "true" : undefined}
                       aria-describedby={comboErrors.model ? modelErrorMessageId : undefined}
-                      className={`w-full rounded-lg border border-border py-2 pl-3 pr-9 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200 ${
+                      className={`w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200 ${
                         selectedMake ? "" : "bg-gray-100 text-ink-muted"
                       }`}
                     />
@@ -1166,7 +1167,7 @@ useEffect(() => {
                       <ul
                         id={modelListboxId}
                         role="listbox"
-                        className="absolute left-0 right-0 z-20 mt-1 max-h-60 overflow-auto rounded-lg border border-border bg-white p-1 shadow-lg"
+                        className="absolute left-0 right-0 z-20 mt-1 max-h-60 overflow-auto rounded-lg border border-border bg-surface-raised p-1 shadow-lg"
                       >
                         {filteredModelOptions.length === 0 ? (
                           <li
@@ -1240,7 +1241,7 @@ useEffect(() => {
                       disabled={!selectedMake || !selectedModel}
                       aria-invalid={comboErrors.trim ? "true" : undefined}
                       aria-describedby={comboErrors.trim ? trimErrorMessageId : undefined}
-                      className={`w-full rounded-lg border border-border py-2 pl-3 pr-9 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200 ${
+                      className={`w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200 ${
                         selectedMake && selectedModel
                           ? ""
                           : "bg-gray-100 text-ink-muted"
@@ -1262,7 +1263,7 @@ useEffect(() => {
                       <ul
                         id={trimListboxId}
                         role="listbox"
-                        className="absolute left-0 right-0 z-20 mt-1 max-h-60 overflow-auto rounded-lg border border-border bg-white p-1 shadow-lg"
+                        className="absolute left-0 right-0 z-20 mt-1 max-h-60 overflow-auto rounded-lg border border-border bg-surface-raised p-1 shadow-lg"
                       >
                         {filteredTrimOptions.length === 0 ? (
                           <li
@@ -1336,7 +1337,7 @@ useEffect(() => {
                       placeholder="Enter year"
                       required
                       disabled={!selectedTrim}
-                      className={`w-full rounded-lg border border-border py-2 pl-3 pr-9 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200 ${
+                      className={`w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200 ${
                         selectedTrim ? "" : "bg-gray-100 text-ink-muted cursor-not-allowed"
                       }`}
                     />
@@ -1354,7 +1355,7 @@ useEffect(() => {
                       <ul
                         id={yearListboxId}
                         role="listbox"
-                        className="absolute left-0 right-0 z-20 mt-1 max-h-60 overflow-auto rounded-lg border border-border bg-white p-1 shadow-lg"
+                        className="absolute left-0 right-0 z-20 mt-1 max-h-60 overflow-auto rounded-lg border border-border bg-surface-raised p-1 shadow-lg"
                       >
                         {filteredYearOptions.length === 0 ? (
                           <li
@@ -1514,13 +1515,14 @@ useEffect(() => {
                       Saving
                     </>
                   ) : (
-                    "Save vehicle"
+                    "Save Vehicle"
                   )}
                 </Button>
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       ) : null}
     </>
   );
