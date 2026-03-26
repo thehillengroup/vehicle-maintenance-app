@@ -9,7 +9,7 @@ import {
 } from "@repo/core";
 import type { Reminder, Vehicle } from "@repo/core";
 import { addDays, isBefore } from "date-fns";
-import { prisma } from "./client.js";
+import { prisma } from "./client";
 
 const vehicleSelect = {
   id: true,
