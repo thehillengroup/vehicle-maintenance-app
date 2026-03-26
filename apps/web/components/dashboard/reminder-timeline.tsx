@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { differenceInCalendarDays, format } from "date-fns";
 import type { Reminder } from "@repo/core";
 import { Badge } from "@repo/ui/badge";
 
@@ -12,41 +12,61 @@ const toneForType: Record<Reminder["type"], "danger" | "info" | "warning"> = {
   SERVICE: "info",
 };
 
+const dotColor: Record<Reminder["type"], string> = {
+  REGISTRATION: "bg-red-500",
+  EMISSIONS: "bg-amber-500",
+  SERVICE: "bg-brand-500",
+};
+
 export const ReminderTimeline = ({ reminders }: ReminderTimelineProps) => {
   if (!reminders.length) {
     return (
-      <div className="rounded-2xl border border-dashed border-border bg-surface-raised p-6 text-sm text-ink-subtle">
-        No upcoming reminders. Add a vehicle or log maintenance to generate alerts.
+      <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-ink-subtle">
+        No upcoming reminders. Add a vehicle to start tracking.
       </div>
     );
   }
 
   return (
-    <ul className="space-y-3">
-      {reminders.map((reminder) => (
-        <li
-          key={reminder.id}
-          className="flex items-start gap-4 rounded-xl border border-border bg-surface-raised p-4 shadow-sm"
-        >
-          <div className="mt-1 h-2.5 w-2.5 flex-none rounded-full bg-brand-500" />
-          <div className="flex-1">
-            <div className="flex flex-wrap items-center gap-3">
-              <h3 className="text-sm font-semibold text-ink">
-                {reminder.type === "SERVICE" ? "Scheduled service" : `${reminder.type.toLowerCase()} check`}
-              </h3>
-              <Badge tone={toneForType[reminder.type]}>
-                Due {format(reminder.dueDate, "MMM d, yyyy")}
-              </Badge>
-            </div>
-            {reminder.notes ? (
-              <p className="mt-1 text-sm text-ink-subtle">{reminder.notes}</p>
+    <ul className="space-y-px">
+      {reminders.map((reminder, idx) => {
+        const daysUntil = differenceInCalendarDays(reminder.dueDate, new Date());
+        return (
+          <li key={reminder.id} className="relative flex gap-3 py-3">
+            {/* Timeline line */}
+            {idx < reminders.length - 1 ? (
+              <div className="absolute left-[7px] top-[26px] h-full w-px bg-border" />
             ) : null}
-            <p className="mt-2 text-xs text-ink-muted">
-              Alert via {reminder.channels.join(", ")}
-            </p>
-          </div>
-        </li>
-      ))}
+
+            <div className={`relative mt-1.5 h-3.5 w-3.5 flex-none rounded-full ring-2 ring-surface-raised ${dotColor[reminder.type]}`} />
+
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium text-ink">
+                  {reminder.type === "SERVICE"
+                    ? "Service"
+                    : reminder.type === "REGISTRATION"
+                    ? "Registration"
+                    : "Emissions"}
+                </span>
+                <Badge tone={toneForType[reminder.type]}>
+                  {daysUntil < 0
+                    ? `${Math.abs(daysUntil)}d overdue`
+                    : daysUntil === 0
+                    ? "Today"
+                    : `${daysUntil}d`}
+                </Badge>
+              </div>
+              <p className="mt-0.5 text-xs text-ink-subtle">
+                {format(reminder.dueDate, "MMM d, yyyy")}
+              </p>
+              {reminder.notes ? (
+                <p className="mt-0.5 text-xs text-ink-subtle">{reminder.notes}</p>
+              ) : null}
+            </div>
+          </li>
+        );
+      })}
     </ul>
   );
 };

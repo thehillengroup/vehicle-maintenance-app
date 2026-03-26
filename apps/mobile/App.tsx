@@ -1,5 +1,6 @@
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useMemo, useState } from "react";
+import { Modal, TextInput, TouchableOpacity, Alert } from "react-native";
 import {
   ActivityIndicator,
   ScrollView,
@@ -31,7 +32,12 @@ import {
   JetBrainsMono_500Medium,
 } from "@expo-google-fonts/jetbrains-mono";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3000";
+// Set EXPO_PUBLIC_API_URL in your .env or app.config.js for production or staging.
+// For local development on a real device/emulator, use your computer's LAN IP (not localhost).
+// Example: EXPO_PUBLIC_API_URL=http://192.168.1.100:3000
+const API_URL =
+  process.env.EXPO_PUBLIC_API_URL ||
+  "http://192.168.1.100:3000"; // <-- Replace with your computer's LAN IP if testing on device
 
 const palette = {
   surface: "#f8fafc",
@@ -77,14 +83,14 @@ const FALLBACK_VEHICLES: Array<Partial<Vehicle> & { id: string }> = [
     licensePlate: "7XYZ123",
     registrationState: "CA",
     fuelType: "GAS",
-    registrationRenewedOn: "2025-02-12",
-    registrationDueOn: "2026-02-12",
-    emissionsTestedOn: "2024-12-15",
-    emissionsDueOn: "2026-12-15",
+    registrationRenewedOn: new Date("2025-02-12"),
+    registrationDueOn: new Date("2026-02-12"),
+    emissionsTestedOn: new Date("2024-12-15"),
+    emissionsDueOn: new Date("2026-12-15"),
     mileage: 18234,
     color: "Blue",
-    createdAt: "2024-01-01",
-    updatedAt: "2025-05-01",
+    createdAt: new Date("2024-01-01"),
+    updatedAt: new Date("2025-05-01"),
   },
   {
     id: "demo-vehicle-2",
@@ -97,14 +103,14 @@ const FALLBACK_VEHICLES: Array<Partial<Vehicle> & { id: string }> = [
     licensePlate: "EV12345",
     registrationState: "CA",
     fuelType: "EV",
-    registrationRenewedOn: "2025-06-01",
-    registrationDueOn: "2026-06-01",
+    registrationRenewedOn: new Date("2025-06-01"),
+    registrationDueOn: new Date("2026-06-01"),
     emissionsTestedOn: null,
     emissionsDueOn: null,
     mileage: 40211,
     color: "Pearl White",
-    createdAt: "2023-06-15",
-    updatedAt: "2025-04-10",
+    createdAt: new Date("2023-06-15"),
+    updatedAt: new Date("2025-04-10"),
   },
 ];
 
@@ -124,6 +130,18 @@ const FALLBACK_REMINDERS: Reminder[] = [
 ];
 
 export default function App() {
+  // Add vehicle modal state
+  const [addModalVisible, setAddModalVisible] = useState(false);
+  const [form, setForm] = useState({
+    make: "",
+    model: "",
+    year: "",
+    vin: "",
+    registrationState: "",
+    mileage: "",
+    color: "",
+  });
+  const [submitting, setSubmitting] = useState(false);
   const [vehicleSummaries, setVehicleSummaries] = useState<VehicleSummary[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -160,7 +178,7 @@ export default function App() {
           vehiclePayload?.data?.map((item: unknown) =>
             vehicleSchema.parse(item),
           ) ??
-          FALLBACK_VEHICLES.map((item) =>
+          FALLBACK_VEHICLES.map((item: Partial<Vehicle> & { id: string }) =>
             vehicleSchema.parse({
               ...item,
               registrationRenewedOn: item.registrationRenewedOn ?? null,
@@ -181,7 +199,7 @@ export default function App() {
 
         if (!cancelled) {
           setVehicleSummaries(
-            parsedVehicles.map((vehicle) => ({
+            parsedVehicles.map((vehicle: Vehicle) => ({
               vehicle,
               registrationDueIn: vehicle.registrationDueOn
                 ? differenceInCalendarDays(vehicle.registrationDueOn, new Date())
@@ -195,7 +213,7 @@ export default function App() {
         }
       } catch (error) {
         console.warn("Falling back to offline data", error);
-        const parsedVehicles = FALLBACK_VEHICLES.map((item) =>
+        const parsedVehicles = FALLBACK_VEHICLES.map((item: Partial<Vehicle> & { id: string }) =>
           vehicleSchema.parse({
             ...item,
             registrationRenewedOn: item.registrationRenewedOn ?? null,
@@ -210,7 +228,7 @@ export default function App() {
         );
         if (!cancelled) {
           setVehicleSummaries(
-            parsedVehicles.map((vehicle) => ({
+            parsedVehicles.map((vehicle: Vehicle) => ({
               vehicle,
               registrationDueIn: vehicle.registrationDueOn
                 ? differenceInCalendarDays(vehicle.registrationDueOn, new Date())
@@ -294,8 +312,90 @@ export default function App() {
     );
   }
 
+  // Add vehicle handler
+  const handleAddVehicle = async () => {
+    setSubmitting(true);
+    try {
+      const payload = {
+        make: form.make,
+        model: form.model,
+        year: Number(form.year),
+        vin: form.vin,
+        registrationState: form.registrationState,
+        mileage: form.mileage ? Number(form.mileage) : null,
+        color: form.color,
+        fuelType: "GAS", // default
+      };
+      const res = await fetch(`${API_URL}/api/vehicles`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.error || "Failed to add vehicle");
+      }
+      setAddModalVisible(false);
+      setForm({ make: "", model: "", year: "", vin: "", registrationState: "", mileage: "", color: "" });
+      // Refresh vehicle list
+      setLoading(true);
+      await hydrate();
+      Alert.alert("Success", "Vehicle added!");
+    } catch (err) {
+      Alert.alert("Error", err instanceof Error ? err.message : "Unexpected error");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Expose hydrate for refresh after add
+  async function hydrate() {
+    try {
+      const [vehicleRes, reminderRes] = await Promise.all([
+        fetch(`${API_URL}/api/vehicles`).catch(() => null),
+        fetch(`${API_URL}/api/reminders`).catch(() => null),
+      ]);
+      const vehiclePayload = await vehicleRes?.json().catch(() => null);
+      const reminderPayload = await reminderRes?.json().catch(() => null);
+      const parsedVehicles =
+        vehiclePayload?.data?.map((item: unknown) => vehicleSchema.parse(item)) ?? FALLBACK_VEHICLES.map((item: Partial<Vehicle> & { id: string }) => vehicleSchema.parse({ ...item }));
+      const parsedReminders =
+        reminderPayload?.data?.map((item: unknown) => reminderSchema.parse(item)) ?? FALLBACK_REMINDERS;
+      setVehicleSummaries(
+        parsedVehicles.map((vehicle: Vehicle) => ({
+          vehicle,
+          registrationDueIn: vehicle.registrationDueOn ? differenceInCalendarDays(vehicle.registrationDueOn, new Date()) : null,
+          emissionsDueIn: vehicle.emissionsDueOn ? differenceInCalendarDays(vehicle.emissionsDueOn, new Date()) : null,
+        }))
+      );
+      setReminders(parsedReminders);
+    } catch {}
+    setLoading(false);
+  }
+
   return (
     <SafeAreaProvider>
+      {/* Add Vehicle Modal */}
+      <Modal visible={addModalVisible} animationType="slide" transparent>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#0008" }}>
+          <View style={{ backgroundColor: "#fff", padding: 24, borderRadius: 16, width: "90%" }}>
+            <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 12 }}>Add Vehicle</Text>
+            <TextInput placeholder="Make" value={form.make} onChangeText={v => setForm(f => ({ ...f, make: v }))} style={{ marginBottom: 8, borderWidth: 1, borderColor: palette.border, borderRadius: 8, padding: 8 }} />
+            <TextInput placeholder="Model" value={form.model} onChangeText={v => setForm(f => ({ ...f, model: v }))} style={{ marginBottom: 8, borderWidth: 1, borderColor: palette.border, borderRadius: 8, padding: 8 }} />
+            <TextInput placeholder="Year" value={form.year} onChangeText={v => setForm(f => ({ ...f, year: v }))} keyboardType="numeric" style={{ marginBottom: 8, borderWidth: 1, borderColor: palette.border, borderRadius: 8, padding: 8 }} />
+            <TextInput placeholder="VIN" value={form.vin} onChangeText={v => setForm(f => ({ ...f, vin: v }))} style={{ marginBottom: 8, borderWidth: 1, borderColor: palette.border, borderRadius: 8, padding: 8 }} />
+            <TextInput placeholder="Registration State" value={form.registrationState} onChangeText={v => setForm(f => ({ ...f, registrationState: v }))} style={{ marginBottom: 8, borderWidth: 1, borderColor: palette.border, borderRadius: 8, padding: 8 }} />
+            <TextInput placeholder="Mileage" value={form.mileage} onChangeText={v => setForm(f => ({ ...f, mileage: v }))} keyboardType="numeric" style={{ marginBottom: 8, borderWidth: 1, borderColor: palette.border, borderRadius: 8, padding: 8 }} />
+            <TextInput placeholder="Color" value={form.color} onChangeText={v => setForm(f => ({ ...f, color: v }))} style={{ marginBottom: 8, borderWidth: 1, borderColor: palette.border, borderRadius: 8, padding: 8 }} />
+            <View style={{ flexDirection: "row", justifyContent: "flex-end", gap: 12 }}>
+              <TouchableOpacity onPress={() => setAddModalVisible(false)} style={{ padding: 10 }}><Text>Cancel</Text></TouchableOpacity>
+              <TouchableOpacity onPress={handleAddVehicle} disabled={submitting} style={{ backgroundColor: palette.brand600, padding: 10, borderRadius: 8 }}>
+                <Text style={{ color: "#fff" }}>{submitting ? "Saving..." : "Save Vehicle"}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
       <SafeAreaView style={styles.safeArea}>
         <StatusBar style="dark" />
         <ScrollView
@@ -303,7 +403,19 @@ export default function App() {
           contentContainerStyle={styles.scrollContent}
         >
           <View style={styles.header}>
-            <Text style={styles.brand}>FleetCare</Text>
+            {/* DEBUG INFO */}
+            <View style={{ marginBottom: 8, backgroundColor: '#fee', padding: 8, borderRadius: 8 }}>
+              <Text style={{ color: '#b00', fontWeight: 'bold' }}>API URL: {API_URL}</Text>
+              <Text style={{ color: '#b00' }}>
+                {vehicleSummaries.length && vehicleSummaries[0]?.vehicle?.id?.startsWith('demo-')
+                  ? 'Using fallback/demo data'
+                  : 'Using API data'}
+              </Text>
+            </View>
+            <TouchableOpacity onPress={() => setAddModalVisible(true)} style={{ alignSelf: "flex-end", backgroundColor: palette.brand600, padding: 10, borderRadius: 8, marginBottom: 8 }}>
+              <Text style={{ color: "#fff" }}>Add Vehicle</Text>
+            </TouchableOpacity>
+            <Text style={styles.brand}>CarFolio</Text>
             <Text style={styles.title}>Garage overview</Text>
             <Text style={styles.subtitle}>
               Monitor renewals, inspections, and service reminders while you are

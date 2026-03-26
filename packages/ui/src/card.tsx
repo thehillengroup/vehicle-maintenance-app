@@ -5,7 +5,7 @@ export type CardProps = React.HTMLAttributes<HTMLDivElement>;
 export const Card = ({ className, ...props }: CardProps) => (
   <div
     className={clsx(
-      "group relative overflow-hidden rounded-2xl border border-border/80 bg-surface-raised p-6 shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:shadow-lg",
+      "rounded-xl border border-border bg-surface-raised shadow-card transition",
       className,
     )}
     {...props}
@@ -13,11 +13,11 @@ export const Card = ({ className, ...props }: CardProps) => (
 );
 
 export const CardHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={clsx("mb-4 flex flex-col gap-1", className)} {...props} />
+  <div className={clsx("flex flex-col gap-1 p-5 pb-0", className)} {...props} />
 );
 
 export const CardTitle = ({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => (
-  <h3 className={clsx("text-lg font-semibold text-ink font-heading", className)} {...props} />
+  <h3 className={clsx("font-heading text-base font-semibold text-ink", className)} {...props} />
 );
 
 export const CardDescription = ({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) => (
@@ -25,9 +25,9 @@ export const CardDescription = ({ className, ...props }: React.HTMLAttributes<HT
 );
 
 export const CardContent = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={clsx("space-y-4", className)} {...props} />
+  <div className={clsx("p-5 pt-4 space-y-4", className)} {...props} />
 );
 
 export const CardFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={clsx("mt-6 flex items-center justify-between", className)} {...props} />
+  <div className={clsx("flex items-center justify-between border-t border-border px-5 py-3", className)} {...props} />
 );

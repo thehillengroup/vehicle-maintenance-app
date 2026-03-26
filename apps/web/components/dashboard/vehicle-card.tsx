@@ -6,7 +6,6 @@ import { VehicleInlineEditor } from "./vehicle-inline-editor";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -42,72 +41,94 @@ const vehicleTypeLabel: Record<Vehicle["vehicleType"], string> = {
 };
 
 const describeWindow = (days: number) => {
-  if (days < 0) return `${Math.abs(days)} days overdue`;
+  if (days < 0) return `${Math.abs(days)}d overdue`;
   if (days === 0) return "Due today";
   if (days === 1) return "Due tomorrow";
-  return `Due in ${days} days`;
+  return `${days}d remaining`;
+};
+
+const complianceTone = (days: number | null): "danger" | "warning" | "success" => {
+  if (days === null) return "success";
+  if (days < 0) return "danger";
+  if (days <= 30) return "warning";
+  return "success";
 };
 
 export const VehicleCard = ({ vehicle, compliance, openReminders, onDeleted, onUpdated }: VehicleCardProps) => {
   const [showQuickEdit, setShowQuickEdit] = useState(false);
 
   return (
-    <Card className="shadow-card">
+    <Card>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between gap-4">
-          <span>
-            {vehicle.year} {vehicle.make} {vehicle.model}
-            {vehicle.trim ? <span className="text-sm text-ink-subtle"> - {vehicle.trim}</span> : null}
-          </span>
-          <Badge tone="info" className="text-xs uppercase tracking-wide">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <CardTitle>
+              {vehicle.year} {vehicle.make} {vehicle.model}
+              {vehicle.trim ? <span className="ml-1 text-sm font-normal text-ink-subtle">{vehicle.trim}</span> : null}
+            </CardTitle>
+            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-subtle">
+              <span className="font-mono">{vehicle.vin}</span>
+              <span>·</span>
+              <span>{vehicleTypeLabel[vehicle.vehicleType]}</span>
+              {vehicle.licensePlate ? <><span>·</span><span>{vehicle.licensePlate}</span></> : null}
+              <span>·</span>
+              <span>{vehicle.registrationState}</span>
+            </div>
+          </div>
+          <Badge tone="info" className="flex-shrink-0 text-xs uppercase tracking-wide">
             {vehicle.purpose.replaceAll("_", " ")}
           </Badge>
-        </CardTitle>
-        <CardDescription className="flex flex-wrap items-center gap-3 text-xs uppercase tracking-wide text-ink-muted">
-          <span className="font-semibold text-ink">VIN:</span>
-          <span className="font-mono text-ink-muted">{vehicle.vin}</span>
-        </CardDescription>
-        <CardDescription className="text-xs uppercase tracking-wide text-ink-muted">
-          {vehicleTypeLabel[vehicle.vehicleType]}
-          {vehicle.licensePlate ? ` · Plate ${vehicle.licensePlate}` : ""}
-          {` · ${vehicle.registrationState} - ${vehicle.fuelType}`}
-        </CardDescription>
+        </div>
       </CardHeader>
-      <CardContent className="!space-y-0 grid gap-6 sm:grid-cols-2">
-        <div>
-          <h4 className="text-sm font-semibold text-ink">Registration</h4>
-          {compliance.registrationDueOn ? (
-            <p className="mt-1 text-sm text-ink-subtle">
-              Expires {format(compliance.registrationDueOn, "MMM d, yyyy")} -{" "}
-              {describeWindow(compliance.registrationDueInDays ?? 0)}
+
+      <CardContent className="!space-y-0">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="space-y-0.5">
+            <p className="text-xs font-medium uppercase tracking-wide text-ink-subtle">Registration</p>
+            {compliance.registrationDueOn ? (
+              <>
+                <p className="text-sm font-medium text-ink">{format(compliance.registrationDueOn, "MMM d, yyyy")}</p>
+                <Badge tone={complianceTone(compliance.registrationDueInDays)} className="mt-1">
+                  {describeWindow(compliance.registrationDueInDays ?? 0)}
+                </Badge>
+              </>
+            ) : (
+              <p className="text-sm text-ink-subtle">Not scheduled</p>
+            )}
+          </div>
+
+          <div className="space-y-0.5">
+            <p className="text-xs font-medium uppercase tracking-wide text-ink-subtle">Emissions</p>
+            {compliance.emissionsDueOn ? (
+              <>
+                <p className="text-sm font-medium text-ink">{format(compliance.emissionsDueOn, "MMM d, yyyy")}</p>
+                <Badge tone={complianceTone(compliance.emissionsDueInDays)} className="mt-1">
+                  {describeWindow(compliance.emissionsDueInDays ?? 0)}
+                </Badge>
+              </>
+            ) : (
+              <p className="text-sm text-ink-subtle">Not required</p>
+            )}
+          </div>
+
+          <div className="space-y-0.5">
+            <p className="text-xs font-medium uppercase tracking-wide text-ink-subtle">Mileage</p>
+            <p className="text-sm font-medium text-ink">
+              {vehicle.mileage ? `${vehicle.mileage.toLocaleString()} mi` : "—"}
             </p>
-          ) : (
-            <p className="mt-1 text-sm text-ink-subtle">Not scheduled</p>
-          )}
-        </div>
-        <div>
-          <h4 className="text-sm font-semibold text-ink">Emissions</h4>
-          {compliance.emissionsDueOn ? (
-            <p className="mt-1 text-sm text-ink-subtle">
-              Expires {format(compliance.emissionsDueOn, "MMM d, yyyy")} - {describeWindow(compliance.emissionsDueInDays ?? 0)}
+          </div>
+
+          <div className="space-y-0.5">
+            <p className="text-xs font-medium uppercase tracking-wide text-ink-subtle">Updated</p>
+            <p className="text-sm font-medium text-ink">
+              {differenceInCalendarDays(new Date(), vehicle.updatedAt) === 0
+                ? "Today"
+                : `${differenceInCalendarDays(new Date(), vehicle.updatedAt)}d ago`}
             </p>
-          ) : (
-            <p className="mt-1 text-sm text-ink-subtle">Not required for this vehicle</p>
-          )}
-        </div>
-        <div>
-          <h4 className="text-sm font-semibold text-ink">Mileage</h4>
-          <p className="mt-1 text-sm text-ink-subtle">
-            {vehicle.mileage ? `${vehicle.mileage.toLocaleString()} miles` : "Mileage not logged"}
-          </p>
-        </div>
-        <div>
-          <h4 className="text-sm font-semibold text-ink">Last updated</h4>
-          <p className="mt-1 text-sm text-ink-subtle">
-            {format(vehicle.updatedAt, "MMM d, yyyy")} - {differenceInCalendarDays(new Date(), vehicle.updatedAt)} days ago
-          </p>
+          </div>
         </div>
       </CardContent>
+
       {showQuickEdit ? (
         <VehicleInlineEditor
           vehicle={vehicle}
@@ -115,16 +136,17 @@ export const VehicleCard = ({ vehicle, compliance, openReminders, onDeleted, onU
           onClose={() => setShowQuickEdit(false)}
         />
       ) : null}
-      <CardFooter className="flex items-center justify-between">
-        <div className="flex flex-wrap gap-2">
+
+      <CardFooter>
+        <div className="flex flex-wrap gap-1.5">
           {openReminders.length ? (
             openReminders.map((reminder) => (
               <Badge key={reminder.id} tone={reminder.type === "SERVICE" ? "warning" : "danger"}>
-                {reminder.type.toLowerCase()} - {format(reminder.dueDate, "MMM d")}
+                {reminder.type.toLowerCase()} · {format(reminder.dueDate, "MMM d")}
               </Badge>
             ))
           ) : (
-            <Badge tone="success">No active reminders</Badge>
+            <Badge tone="success">All clear</Badge>
           )}
         </div>
         <VehicleActions

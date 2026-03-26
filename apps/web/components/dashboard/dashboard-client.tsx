@@ -177,7 +177,7 @@ export function DashboardClient({ initialVehicles, initialReminders }: Dashboard
           })}
           {vehicles.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border bg-surface-raised p-8 text-center text-ink-subtle">
-              <p className="text-base font-semibold text-ink">Welcome to FleetCare</p>
+              <p className="text-base font-semibold text-ink">Welcome to CarFolio</p>
               <p className="mt-2 text-sm text-ink-subtle">
                 Start by adding your first vehicle to automatically track registration and emissions milestones.
               </p>

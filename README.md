@@ -1,6 +1,6 @@
-# FleetCare Monorepo
+# CarFolio Monorepo
 
-FleetCare is a shared React + React Native workspace for managing vehicle maintenance records, registration renewals, and emissions reminders. The Turborepo houses a Next.js web portal, an Expo-powered mobile app, and shared domain packages backed by Prisma + PostgreSQL (SQLite for local development).
+CarFolio is a shared React + React Native workspace for managing vehicle maintenance records, registration renewals, and emissions reminders. The Turborepo houses a Next.js web portal, an Expo-powered mobile app, and shared domain packages backed by Prisma + PostgreSQL (SQLite for local development).
 
 > **Publishing reminder:** everything lives locally. When you're ready to push to GitHub, run:
 ``bash

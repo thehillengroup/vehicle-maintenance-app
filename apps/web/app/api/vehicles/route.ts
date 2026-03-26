@@ -4,6 +4,8 @@ import { getDemoUser } from "../../../lib/demo-user";
 import { DuplicateVehicleVinError, listVehicles, upsertVehicle } from "@repo/db";
 import { vehicleUpsertSchema } from "@repo/core";
 
+
+// PUBLIC TESTING: Allow all origins and methods for CORS
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
@@ -21,7 +23,9 @@ export function OPTIONS() {
   return withCors(new NextResponse(null, { status: 204 }));
 }
 
+// GET endpoint is fully public for testing
 export async function GET() {
+  // No authentication required for demo/testing
   const user = await getDemoUser();
   const vehicles = await listVehicles(user.id);
   return withCors(NextResponse.json({ data: vehicles }));
