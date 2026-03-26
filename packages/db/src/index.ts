@@ -9,7 +9,7 @@ import {
 } from "@repo/core";
 import type { Reminder, Vehicle } from "@repo/core";
 import { addDays, isBefore } from "date-fns";
-import { prisma } from "./client";
+import { prisma } from "./client.js";
 
 const vehicleSelect = {
   id: true,
@@ -46,7 +46,7 @@ export const listVehicles = async (userId: string): Promise<Vehicle[]> => {
     select: vehicleSelect,
   });
 
-  return vehicles.map((v) => vehicleSchema.parse(v));
+  return vehicles.map((v: unknown) => vehicleSchema.parse(v));
 };
 
 export const ensureUserByEmail = async (email: string) => {
@@ -177,7 +177,7 @@ export const getVehicleDetail = async (
   return {
     vehicle: vehicleSchema.parse(vehicle),
     maintenanceEvents: vehicle.maintenanceEvents,
-    reminders: vehicle.reminders.map((reminder) =>
+    reminders: vehicle.reminders.map((reminder: Prisma.ReminderGetPayload<Record<string, never>>) =>
       reminderSchema.parse({
         id: reminder.id,
         vehicleId: reminder.vehicleId,
@@ -305,7 +305,7 @@ export const getDueReminders = async ({
     orderBy: { dueOn: "asc" },
   });
 
-  return reminders.map((reminder) =>
+  return reminders.map((reminder: Prisma.ReminderGetPayload<Record<string, never>>) =>
     reminderSchema.parse({
       id: reminder.id,
       vehicleId: reminder.vehicleId,
