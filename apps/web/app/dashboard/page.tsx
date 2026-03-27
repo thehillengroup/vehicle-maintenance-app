@@ -1,13 +1,16 @@
 export const dynamic = "force-dynamic";
 
+import { redirect } from "next/navigation";
+import { auth } from "../../auth";
+import { ensureUserByEmail, getDueReminders, listVehicles } from "@repo/db";
 import { AppShell } from "../../components/layout/app-shell";
-import { getDemoUser } from "../../lib/demo-user";
-import { getDueReminders, listVehicles } from "@repo/db";
 import { DashboardClient } from "../../components/dashboard/dashboard-client";
 import { DashboardActions } from "../../components/dashboard/dashboard-actions";
 
 export default async function DashboardPage() {
-  const user = await getDemoUser();
+  const session = await auth();
+  if (!session?.user?.email) redirect("/signin");
+  const user = await ensureUserByEmail(session.user.email);
   const [vehicles, reminders] = await Promise.all([
     listVehicles(user.id),
     getDueReminders({ userId: user.id, withinDays: 90 }),

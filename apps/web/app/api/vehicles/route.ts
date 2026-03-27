@@ -1,40 +1,25 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { getDemoUser } from "../../../lib/demo-user";
-import { DuplicateVehicleVinError, listVehicles, upsertVehicle } from "@repo/db";
+import { auth } from "../../../auth";
+import { DuplicateVehicleVinError, ensureUserByEmail, listVehicles, upsertVehicle } from "@repo/db";
 import { vehicleUpsertSchema } from "@repo/core";
 
+const unauthorized = () => NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-// PUBLIC TESTING: Allow all origins and methods for CORS
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-};
-
-const withCors = (response: NextResponse) => {
-  Object.entries(corsHeaders).forEach(([key, value]) =>
-    response.headers.set(key, value),
-  );
-  return response;
-};
-
-export function OPTIONS() {
-  return withCors(new NextResponse(null, { status: 204 }));
-}
-
-// GET endpoint is fully public for testing
 export async function GET() {
-  // No authentication required for demo/testing
-  const user = await getDemoUser();
+  const session = await auth();
+  if (!session?.user?.email) return unauthorized();
+  const user = await ensureUserByEmail(session.user.email);
   const vehicles = await listVehicles(user.id);
-  return withCors(NextResponse.json({ data: vehicles }));
+  return NextResponse.json({ data: vehicles });
 }
 
 export async function POST(request: Request) {
-  const user = await getDemoUser();
-  const json = await request.json();
+  const session = await auth();
+  if (!session?.user?.email) return unauthorized();
+  const user = await ensureUserByEmail(session.user.email);
 
+  const json = await request.json();
   const parsed = vehicleUpsertSchema.safeParse(json);
   if (!parsed.success) {
     return NextResponse.json(
@@ -44,29 +29,14 @@ export async function POST(request: Request) {
   }
 
   try {
-    const vehicle = await upsertVehicle({
-      userId: user.id,
-      payload: parsed.data,
-    });
-
+    const vehicle = await upsertVehicle({ userId: user.id, payload: parsed.data });
     revalidatePath("/");
-
-    return withCors(NextResponse.json({ data: vehicle }, { status: 201 }));
+    return NextResponse.json({ data: vehicle }, { status: 201 });
   } catch (error) {
     if (error instanceof DuplicateVehicleVinError) {
-      return withCors(
-        NextResponse.json(
-          { error: error.message },
-          { status: 409 },
-        ),
-      );
+      return NextResponse.json({ error: error.message }, { status: 409 });
     }
     console.error("Vehicle create failed", error);
-    return withCors(
-      NextResponse.json(
-        { error: "Unable to save vehicle right now." },
-        { status: 500 },
-      ),
-    );
+    return NextResponse.json({ error: "Unable to save vehicle right now." }, { status: 500 });
   }
 }

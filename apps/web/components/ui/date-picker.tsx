@@ -3,8 +3,6 @@ import ReactDatePicker from "react-datepicker";
 import { format, parseISO } from "date-fns";
 import clsx from "clsx";
 
-import "react-datepicker/dist/react-datepicker.css";
-
 type AllowedValue = string | null | undefined;
 
 interface DatePickerProps {
@@ -104,6 +102,7 @@ export const DatePicker = ({
         dropdownMode="select"
         scrollableYearDropdown
         yearDropdownItemNumber={20}
+        showFixedNumberOfWeeks
         dayClassName={(date) =>
           clsx(
             "vm-datepicker-day",

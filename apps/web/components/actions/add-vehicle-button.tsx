@@ -1010,9 +1010,8 @@ useEffect(() => {
   return (
     <>
       <Button
-        className={`${appearance === "primary"
-          ? "bg-brand-600 text-white transition hover:bg-brand-700 focus-visible:ring-2 focus-visible:ring-brand-200"
-          : "border border-border bg-surface-subtle text-ink transition hover:bg-surface-raised"} ${className}`}
+        variant={appearance === "primary" ? "primary" : "secondary"}
+        className={className}
         onClick={() => setOpen(true)}
       >
         <FiPlus className="h-4 w-4" />
