@@ -1,4 +1,5 @@
 import { Prisma } from "@prisma/client";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import {
   CreateReminderPayload,
   createReminderPayloadSchema,
@@ -126,7 +127,7 @@ export const upsertVehicle = async ({
     return vehicleSchema.parse(result);
   } catch (error) {
     if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error instanceof PrismaClientKnownRequestError &&
       error.code === "P2002" &&
       typeof error.meta?.target === "string" &&
       error.meta.target.includes("vin")
