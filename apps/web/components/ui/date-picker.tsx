@@ -102,7 +102,6 @@ export const DatePicker = ({
         dropdownMode="select"
         scrollableYearDropdown
         yearDropdownItemNumber={20}
-        showFixedNumberOfWeeks
         dayClassName={(date) =>
           clsx(
             "vm-datepicker-day",
