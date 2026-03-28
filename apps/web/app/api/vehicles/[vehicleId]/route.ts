@@ -1,10 +1,22 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { auth } from "../../../../auth";
-import { deleteVehicleById, ensureUserByEmail } from "@repo/db";
+import { deleteVehicleById, ensureUserByEmail, getVehicleDetail } from "@repo/db";
 
 interface RouteContext {
   params: Promise<{ vehicleId: string }>;
+}
+
+export async function GET(_request: Request, context: RouteContext) {
+  const session = await auth();
+  if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const user = await ensureUserByEmail(session.user.email);
+
+  const { vehicleId } = await context.params;
+  const detail = await getVehicleDetail(user.id, vehicleId);
+  if (!detail) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  return NextResponse.json(detail);
 }
 
 export async function DELETE(_request: Request, context: RouteContext) {

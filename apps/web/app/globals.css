@@ -7,9 +7,9 @@
   color-scheme: light;
 
   /* Surfaces */
-  --color-bg:        255 255 255;   /* white */
-  --color-bg-raised: 255 255 255;   /* white */
-  --color-bg-subtle: 248 250 252;   /* slate-50 */
+  --color-bg:        241 243 246;   /* silver-gray page bg */
+  --color-bg-raised: 255 255 255;   /* white cards */
+  --color-bg-subtle: 229 232 237;   /* slightly deeper silver */
 
   /* Text */
   --color-fg:        15  23  42;    /* slate-900 */

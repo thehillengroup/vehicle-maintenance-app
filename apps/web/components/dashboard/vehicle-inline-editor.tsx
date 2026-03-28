@@ -12,11 +12,29 @@ const toDateInputValue = (value: Date | string | null) => {
   return isoString.slice(0, 10);
 };
 
+const VEHICLE_TYPE_OPTIONS: { value: Vehicle["vehicleType"]; label: string }[] = [
+  { value: "SEDAN", label: "Sedan" },
+  { value: "COUPE", label: "Coupe" },
+  { value: "SPORTS_CAR", label: "Sports Car" },
+  { value: "SUV", label: "SUV" },
+  { value: "MOTORCYCLE", label: "Motorcycle" },
+  { value: "CROSSOVER", label: "Crossover" },
+];
+
+const PURPOSE_OPTIONS: { value: Vehicle["purpose"]; label: string }[] = [
+  { value: "DAILY_DRIVER", label: "Daily Driver" },
+  { value: "COMMUTER", label: "Commuter" },
+  { value: "WEEKENDER", label: "Weekender" },
+  { value: "UTILITY_VEHICLE", label: "Utility Vehicle" },
+];
+
 const buildFormState = (source: Vehicle) => ({
   licensePlate: source.licensePlate ?? "",
   mileage: source.mileage?.toString() ?? "",
   registrationRenewedOn: toDateInputValue(source.registrationRenewedOn),
   emissionsTestedOn: toDateInputValue(source.emissionsTestedOn),
+  vehicleType: source.vehicleType,
+  purpose: source.purpose,
 });
 
 interface VehicleInlineEditorProps {
@@ -67,8 +85,8 @@ export function VehicleInlineEditor({ vehicle, onUpdated, onClose }: VehicleInli
       trim: vehicle.trim,
       registrationState: vehicle.registrationState,
       fuelType: vehicle.fuelType,
-      purpose: vehicle.purpose,
-      vehicleType: vehicle.vehicleType,
+      purpose: formState.purpose,
+      vehicleType: formState.vehicleType,
       registrationRenewedOn: registrationRenewedOnValue,
       emissionsTestedOn: emissionsTestedOnValue,
       mileage: formState.mileage ? Number(formState.mileage.replace(/[^\d]/g, "")) : null,
@@ -101,6 +119,8 @@ export function VehicleInlineEditor({ vehicle, onUpdated, onClose }: VehicleInli
           ...vehicle,
           licensePlate: payload.licensePlate,
           mileage: payload.mileage,
+          vehicleType: formState.vehicleType,
+          purpose: formState.purpose,
           registrationRenewedOn: registrationRenewedOnValue ? new Date(registrationRenewedOnValue) : null,
           emissionsTestedOn: emissionsTestedOnValue ? new Date(emissionsTestedOnValue) : null,
           registrationDueOn: registrationRenewedOnValue ? new Date(registrationRenewedOnValue) : null,
@@ -173,6 +193,34 @@ export function VehicleInlineEditor({ vehicle, onUpdated, onClose }: VehicleInli
               }
               placeholder="e.g. 45210"
             />
+          </label>
+          <label className="text-xs uppercase tracking-wide text-ink-subtle">
+            Vehicle type
+            <select
+              className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+              value={formState.vehicleType}
+              onChange={(e) =>
+                setFormState((prev) => ({ ...prev, vehicleType: e.target.value as Vehicle["vehicleType"] }))
+              }
+            >
+              {VEHICLE_TYPE_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs uppercase tracking-wide text-ink-subtle">
+            Use
+            <select
+              className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-ink outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+              value={formState.purpose}
+              onChange={(e) =>
+                setFormState((prev) => ({ ...prev, purpose: e.target.value as Vehicle["purpose"] }))
+              }
+            >
+              {PURPOSE_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
           </label>
           <label className="text-xs uppercase tracking-wide text-ink-subtle">
             Registration expires on

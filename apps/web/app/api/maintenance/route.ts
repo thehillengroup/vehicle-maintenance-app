@@ -4,7 +4,7 @@ import { auth } from "../../../auth";
 import { ensureUserByEmail, logMaintenanceEvent } from "@repo/db";
 
 const maintenanceSchema = z.object({
-  vehicleId: z.string().uuid(),
+  vehicleId: z.string().min(1),
   serviceDate: z.coerce.date(),
   headline: z.string().min(1),
   odometer: z.number().int().nonnegative().nullable().optional(),

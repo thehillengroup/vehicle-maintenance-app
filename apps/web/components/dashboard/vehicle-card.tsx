@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { differenceInCalendarDays, format } from "date-fns";
+import Link from "next/link";
 import { Badge } from "@repo/ui/badge";
 import { VehicleActions } from "./vehicle-actions";
 import { VehicleInlineEditor } from "./vehicle-inline-editor";
@@ -63,7 +64,12 @@ export const VehicleCard = ({ vehicle, compliance, openReminders, onDeleted, onU
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <CardTitle>
-              {vehicle.year} {vehicle.make} {vehicle.model}
+              <Link
+                href={`/vehicles/${vehicle.id}`}
+                className="hover:text-brand-600 transition-colors"
+              >
+                {vehicle.year} {vehicle.make} {vehicle.model}
+              </Link>
               {vehicle.trim ? <span className="ml-1 text-sm font-normal text-ink-subtle">{vehicle.trim}</span> : null}
             </CardTitle>
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-subtle">
@@ -138,7 +144,7 @@ export const VehicleCard = ({ vehicle, compliance, openReminders, onDeleted, onU
       ) : null}
 
       <CardFooter>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5">
           {openReminders.length ? (
             openReminders.map((reminder) => (
               <Badge key={reminder.id} tone={reminder.type === "SERVICE" ? "warning" : "danger"}>
@@ -148,6 +154,12 @@ export const VehicleCard = ({ vehicle, compliance, openReminders, onDeleted, onU
           ) : (
             <Badge tone="success">All clear</Badge>
           )}
+          <Link
+            href={`/vehicles/${vehicle.id}`}
+            className="ml-1 text-xs font-medium text-brand-600 transition hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
+          >
+            Maintenance history →
+          </Link>
         </div>
         <VehicleActions
           vehicleId={vehicle.id}

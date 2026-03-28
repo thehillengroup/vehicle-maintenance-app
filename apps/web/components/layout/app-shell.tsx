@@ -11,8 +11,8 @@ export const AppShell = ({
   actions?: React.ReactNode;
 }) => {
   return (
-    <div className="flex min-h-screen flex-col bg-surface">
-      <header className="sticky top-0 z-40 border-b border-border bg-surface/80 backdrop-blur-sm">
+    <div className="flex min-h-screen flex-col bg-surface [background-image:radial-gradient(circle,rgb(0_0_0/0.11)_1px,transparent_1px)] [background-size:20px_20px] dark:[background-image:radial-gradient(circle,rgb(255_255_255/0.04)_1px,transparent_1px)]">
+      <header className="sticky top-0 z-40 border-b border-border bg-surface-subtle/90 backdrop-blur-sm">
         <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
           <Link href="/" aria-label="CarFolio home">
             <WordmarkLogo />
@@ -42,7 +42,7 @@ export const AppShell = ({
         {children}
       </main>
 
-      <footer className="border-t border-border">
+      <footer className="border-t border-border bg-surface-subtle">
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-5 sm:px-6">
           <p className="text-xs text-ink-subtle">
             &copy; {new Date().getFullYear()} CarFolio. All rights reserved.

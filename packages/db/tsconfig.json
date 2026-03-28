@@ -6,7 +6,9 @@
     "composite": true,
     "declaration": true,
     "declarationMap": true,
-    "moduleResolution": "NodeNext",
+    "emitDeclarationOnly": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "allowImportingTsExtensions": true
   },
   "include": ["src", "prisma"]

@@ -13,15 +13,16 @@ interface LogMaintenanceButtonProps {
   vehicles: Vehicle[];
   onSuccess?: () => void;
   autoOpen?: boolean;
+  initialVehicleId?: string;
 }
 
-export const LogMaintenanceButton = ({ vehicles, onSuccess, autoOpen = false }: LogMaintenanceButtonProps) => {
+export const LogMaintenanceButton = ({ vehicles, onSuccess, autoOpen = false, initialVehicleId = "" }: LogMaintenanceButtonProps) => {
   const router = useRouter();
   const [open, setOpen] = useState(autoOpen);
   const disabled = vehicles.length === 0;
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedVehicleId, setSelectedVehicleId] = useState<string>("");
+  const [selectedVehicleId, setSelectedVehicleId] = useState<string>(initialVehicleId);
 
   const selectedVehicle = useMemo(
     () => vehicles.find((vehicle) => vehicle.id === selectedVehicleId) ?? null,
@@ -49,7 +50,8 @@ export const LogMaintenanceButton = ({ vehicles, onSuccess, autoOpen = false }: 
     setSubmitting(true);
     setError(null);
 
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
 
     const payload = {
       vehicleId: formData.get("vehicleId"),
@@ -79,7 +81,7 @@ export const LogMaintenanceButton = ({ vehicles, onSuccess, autoOpen = false }: 
       }
 
       setOpen(false);
-      event.currentTarget.reset();
+      form.reset();
       setSelectedVehicleId("");
       router.refresh();
       onSuccess?.();
@@ -133,7 +135,7 @@ export const LogMaintenanceButton = ({ vehicles, onSuccess, autoOpen = false }: 
                     </option>
                     {vehicles.map((vehicle) => (
                       <option key={vehicle.id} value={vehicle.id}>
-                        {vehicle.year} {vehicle.make} {vehicle.model} {vehicle.vin}
+                        {vehicle.year} {vehicle.make} {vehicle.model} - ({vehicle.vin})
                       </option>
                     ))}
                   </select>

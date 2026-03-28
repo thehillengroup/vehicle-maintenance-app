@@ -138,19 +138,37 @@ export const upsertVehicle = async ({
 };
 
 export const deleteVehicleById = async (userId: string, vehicleId: string) => {
-  const result = await prisma.vehicle.deleteMany({
-    where: {
-      id: vehicleId,
-      userId,
-    },
-  });
-
-  if (result.count === 0) {
+  const vehicle = await prisma.vehicle.findFirst({ where: { id: vehicleId, userId } });
+  if (!vehicle) {
     const error = new Error("Vehicle not found");
     // @ts-expect-error augmenting for API response usage
     error.status = 404;
     throw error;
   }
+
+  await prisma.$transaction(async (tx) => {
+    const reminderIds = (
+      await tx.reminder.findMany({ where: { vehicleId }, select: { id: true } })
+    ).map((r) => r.id);
+
+    if (reminderIds.length > 0) {
+      await tx.notification.deleteMany({ where: { reminderId: { in: reminderIds } } });
+    }
+
+    await tx.reminder.deleteMany({ where: { vehicleId } });
+
+    const eventIds = (
+      await tx.maintenanceEvent.findMany({ where: { vehicleId }, select: { id: true } })
+    ).map((e) => e.id);
+
+    if (eventIds.length > 0) {
+      await tx.storedDocument.deleteMany({ where: { maintenanceEventId: { in: eventIds } } });
+    }
+
+    await tx.storedDocument.updateMany({ where: { vehicleId }, data: { vehicleId: null } });
+    await tx.maintenanceEvent.deleteMany({ where: { vehicleId } });
+    await tx.vehicle.delete({ where: { id: vehicleId } });
+  });
 };
 
 export const getVehicleDetail = async (
@@ -356,6 +374,93 @@ const parseChannels = (raw: string | null | undefined): Reminder["channels"] => 
     return [];
   } catch {
     return [];
+  }
+};
+
+export interface UpdateMaintenanceEventInput {
+  serviceDate?: Date;
+  headline?: string;
+  odometer?: number | null;
+  costCents?: number | null;
+  location?: string | null;
+  notes?: string | null;
+}
+
+export const deleteMaintenanceEvent = async (userId: string, eventId: string) => {
+  const event = await prisma.maintenanceEvent.findFirst({
+    where: { id: eventId, vehicle: { userId } },
+  });
+  if (!event) {
+    const error = new Error("Maintenance event not found");
+    // @ts-expect-error augmenting for API response usage
+    error.status = 404;
+    throw error;
+  }
+  await prisma.maintenanceEvent.delete({ where: { id: eventId } });
+};
+
+export const updateMaintenanceEvent = async (
+  userId: string,
+  eventId: string,
+  data: UpdateMaintenanceEventInput,
+) => {
+  const event = await prisma.maintenanceEvent.findFirst({
+    where: { id: eventId, vehicle: { userId } },
+  });
+  if (!event) {
+    const error = new Error("Maintenance event not found");
+    // @ts-expect-error augmenting for API response usage
+    error.status = 404;
+    throw error;
+  }
+  return prisma.maintenanceEvent.update({
+    where: { id: eventId },
+    data,
+  });
+};
+
+export const syncVehicleReminders = async (userId: string, vehicleId: string) => {
+  const vehicle = await prisma.vehicle.findFirst({ where: { id: vehicleId, userId } });
+  if (!vehicle) return;
+
+  const compliance: Array<{
+    type: "REGISTRATION" | "EMISSIONS";
+    dueOn: Date | null;
+    leadTimeDays: number;
+    channelsRaw: string;
+  }> = [
+    { type: "REGISTRATION", dueOn: vehicle.registrationDueOn, leadTimeDays: 30, channelsRaw: JSON.stringify(["EMAIL"]) },
+    { type: "EMISSIONS",    dueOn: vehicle.emissionsDueOn,    leadTimeDays: 45, channelsRaw: JSON.stringify(["EMAIL"]) },
+  ];
+
+  for (const { type, dueOn, leadTimeDays, channelsRaw } of compliance) {
+    const existing = await prisma.reminder.findFirst({
+      where: { vehicleId, type, satisfiedAt: null },
+    });
+
+    if (!dueOn) {
+      if (existing) await prisma.reminder.delete({ where: { id: existing.id } });
+      continue;
+    }
+
+    if (existing) {
+      await prisma.reminder.update({
+        where: { id: existing.id },
+        data: { dueOn, nextNotifiedAt: addDays(dueOn, -leadTimeDays) },
+      });
+    } else {
+      await prisma.reminder.create({
+        data: {
+          userId,
+          vehicleId,
+          type,
+          dueOn,
+          leadTimeDays,
+          channelsRaw,
+          nextNotifiedAt: addDays(dueOn, -leadTimeDays),
+        },
+      });
+    }
   }
 };
 

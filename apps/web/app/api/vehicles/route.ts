@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { auth } from "../../../auth";
-import { DuplicateVehicleVinError, ensureUserByEmail, listVehicles, upsertVehicle } from "@repo/db";
+import { DuplicateVehicleVinError, ensureUserByEmail, listVehicles, upsertVehicle, syncVehicleReminders } from "@repo/db";
 import { vehicleUpsertSchema } from "@repo/core";
 
 const unauthorized = () => NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -30,6 +30,7 @@ export async function POST(request: Request) {
 
   try {
     const vehicle = await upsertVehicle({ userId: user.id, payload: parsed.data });
+    await syncVehicleReminders(user.id, vehicle.id);
     revalidatePath("/");
     return NextResponse.json({ data: vehicle }, { status: 201 });
   } catch (error) {
