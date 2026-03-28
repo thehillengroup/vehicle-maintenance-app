@@ -169,7 +169,7 @@ export function DashboardClient({ initialVehicles, initialReminders }: Dashboard
                   emissionsDueOn: vehicle.emissionsDueOn ?? null,
                   emissionsDueInDays,
                 }}
-                openReminders={remindersByVehicle[vehicle.id] ?? []}
+                openReminders={(remindersByVehicle[vehicle.id] ?? []) as Array<{ id: string; type: "REGISTRATION" | "EMISSIONS" | "SERVICE"; dueDate: Date }>}
                 onDeleted={() => handleVehicleDeleted(vehicle.id)}
                 onUpdated={handleVehicleUpdated}
               />

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "../../../auth";
 import { ensureUserByEmail, getDueReminders, scheduleReminder } from "@repo/db";
-import { createReminderPayloadSchema } from "@repo/core";
+import { createReminderPayloadSchema, type CreateReminderPayload } from "@repo/core";
 
 export async function GET(request: Request) {
   const session = await auth();
@@ -29,6 +29,6 @@ export async function POST(request: Request) {
     );
   }
 
-  const reminder = await scheduleReminder(user.id, parsed.data);
+  const reminder = await scheduleReminder(user.id, parsed.data as CreateReminderPayload);
   return NextResponse.json({ data: reminder }, { status: 201 });
 }
