@@ -230,10 +230,31 @@ input[type="date"] {
 }
 
 /* Dark mode */
+.dark .react-datepicker {
+  background-color: rgb(15 23 42);
+  color: rgb(248 250 252);
+}
+
+.dark .react-datepicker__header {
+  background-color: rgb(15 23 42);
+  color: rgb(248 250 252);
+}
+
+.dark .react-datepicker__day-name,
+.dark .react-datepicker__day {
+  color: rgb(248 250 252);
+}
+
 .dark .react-datepicker__day:hover {
   @apply bg-brand-800 text-white;
 }
 
 .dark .react-datepicker__day--outside-month {
-  @apply text-ink-subtle;
+  color: rgb(100 116 139);
+  opacity: 0.6;
+}
+
+.dark .react-datepicker__day--disabled {
+  color: rgb(100 116 139);
+  opacity: 0.3;
 }
