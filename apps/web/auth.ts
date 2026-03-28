@@ -1,9 +1,9 @@
-import NextAuth, { type NextAuthResult } from "next-auth";
+import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import GitHub from "next-auth/providers/github";
 import { ensureUserByEmail } from "@repo/db";
 
-const result: NextAuthResult = NextAuth({
+export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -28,5 +28,3 @@ const result: NextAuthResult = NextAuth({
     signIn: "/signin",
   },
 });
-
-export const { handlers, signIn, signOut, auth } = result;
