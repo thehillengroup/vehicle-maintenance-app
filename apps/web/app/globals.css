@@ -66,7 +66,7 @@ input[type="date"] {
 
 /* ─── Date picker ────────────────────────────────────────────────────────── */
 .react-datepicker {
-  background-color: #ffffff;
+  background-color: rgb(var(--color-bg-raised));
   color: #1e293b;
   font-size: 0.875rem;
   border-radius: 1rem;
