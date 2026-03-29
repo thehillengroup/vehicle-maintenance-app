@@ -2,5 +2,13 @@
   "framework": "nextjs",
   "buildCommand": "turbo run build --filter=web...",
   "outputDirectory": "apps/web/.next",
-  "installCommand": "npm install"
+  "installCommand": "npm install",
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "header", "key": "x-forwarded-proto", "value": "http" }],
+      "destination": "https://mycarfolio.com/:path*",
+      "permanent": true
+    }
+  ]
 }
